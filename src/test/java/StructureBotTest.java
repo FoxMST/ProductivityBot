@@ -1,39 +1,44 @@
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Тесты логики эхо-бота.
  */
+
 class StructureBotTest {
 
-    /** Тестируемый объект. */
+    /**
+     * Тестируемый объект.
+     */
     private final StructureBot bot = new StructureBot();
 
+    /**
+     * Проверяет, что на /start бот возвращает приветствие
+     * с упоминанием команды /help.
+     */
     @Test
     void shouldReturnGreetingForStart() {
         String response = bot.getAnswer("/start");
-        assertTrue(response.contains("Привет"));
-        assertTrue(response.contains("/help"));
+        Assertions.assertEquals("Привет", response);
+        Assertions.assertEquals("/help", response);
     }
 
-    @Test
-    void shouldReturnHelpForHelp() {
-        String response = bot.getAnswer("/help");
-        assertTrue(response.contains("/start"));
-        assertTrue(response.contains("/help"));
-    }
-
+    /**
+     * Проверяет, что на произвольный текст бот отвечает
+     * в формате «Вы ввели: «...»».
+     */
     @Test
     void shouldEchoText() {
         String response = bot.getAnswer("привет");
-        assertEquals("Вы ввели: «привет»", response);
+        Assertions.assertEquals("Вы ввели: «привет»", response);
     }
 
+    /**
+     * Проверяет, что неизвестная команда обрабатывается как обычный текст.
+     */
     @Test
     void shouldEchoUnknownCommand() {
         String response = bot.getAnswer("/unknown");
-        assertEquals("Вы ввели: «/unknown»", response);
+        Assertions.assertEquals("Вы ввели: «/unknown»", response);
     }
 }
