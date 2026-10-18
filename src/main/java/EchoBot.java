@@ -3,17 +3,26 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-/*
- * Echo-bot отправляет пользователю обратно написанный текст
- * */
+/**
+ * Связывает Telegram API с StructureBot.
+ */
 public class EchoBot extends TelegramLongPollingBot {
 
+    /**
+     * Имя бота в Telegram.
+     */
     private final String username;
+    /**
+     * Логика формирования ответов.
+     */
     private final StructureBot botLogic;
 
-    /*
-     * Создает бота
-     * */
+    /**
+     * Создает Telegram-адаптер с указанными учётными данными:
+     *
+     * @param token    токен бота
+     * @param username имя бота
+     */
     public EchoBot(String token, String username) {
         super(token);
         this.username = username;
@@ -28,13 +37,18 @@ public class EchoBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String responstext = botLogic.getAnswer(update.getMessage().getText());
+            String responsetext = botLogic.getAnswer(update.getMessage().getText());
             SendMessage message = new SendMessage(
                     String.valueOf(update.getMessage().getChatId()),
-                    responstext);
+                    responsetext);
             try {
                 execute(message);
             } catch (TelegramApiException e) {
+
+                String chatId = String.valueOf(update.getMessage().getChatId());
+
+                System.err.println("Не удалось отправить сообщение в чат " + chatId
+                        + ": " + e.getMessage());
                 e.printStackTrace();
             }
         }

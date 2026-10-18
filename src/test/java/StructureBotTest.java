@@ -2,9 +2,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Тесты логики эхо-бота.
+ * Тесты для проверки логики формирования ответов.
  */
-
 class StructureBotTest {
 
     /**
@@ -18,9 +17,11 @@ class StructureBotTest {
      */
     @Test
     void shouldReturnGreetingForStart() {
+        String expected = "👋 Привет! Я бот-продуктивность.\n" +
+                "Напиши /help, чтобы увидеть команды.";
         String response = bot.getAnswer("/start");
-        Assertions.assertEquals("Привет", response);
-        Assertions.assertEquals("/help", response);
+
+        Assertions.assertEquals(expected, response);
     }
 
     /**
