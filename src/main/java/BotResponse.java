@@ -11,22 +11,38 @@ public final class BotResponse {
      * Inline-кнопка.
      */
     public static final class Button {
+        /**
+         * Надпись на кнопке.
+         */
         private final String text;
+        /**
+         * Идентификатор действия.
+         */
         private final String actionId;
 
         /**
-         * @param text         надпись на кнопке
-         * @param actionId     идентификатор действия, который придёт логике при нажатии
+         * @param text     надпись на кнопке
+         * @param actionId идентификатор действия
          */
         public Button(String text, String actionId) {
             this.text = text;
             this.actionId = actionId;
         }
 
+        /**
+         * Возвращает надпись на кнопке.
+         *
+         * @return надпись
+         */
         public String getText() {
             return text;
         }
 
+        /**
+         * Возвращает идентификатор действия.
+         *
+         * @return идентификатор
+         */
         public String getActionId() {
             return actionId;
         }
@@ -41,29 +57,40 @@ public final class BotResponse {
      */
     private final List<List<Button>> keyboard;
 
-    private BotResponse(String text, List<List<Button>> keyboard) {
-        this.text = text;
-        this.keyboard = keyboard;
-    }
-
     /**
      * Ответ без кнопок.
+     *
+     * @param text текст сообщения
      */
-    public static BotResponse of(String text) {
-        return new BotResponse(text, Collections.<List<Button>>emptyList());
+    public BotResponse(String text) {
+        this(text, Collections.<List<Button>>emptyList());
     }
 
     /**
      * Ответ с кнопками.
+     *
+     * @param text     текст сообщения
+     * @param keyboard кнопки (список рядов)
      */
-    public static BotResponse withButtons(String text, List<List<Button>> keyboard) {
-        return new BotResponse(text, new ArrayList<>(keyboard));
+    public BotResponse(String text, List<List<Button>> keyboard) {
+        this.text = text;
+        this.keyboard = new ArrayList<>(keyboard);
     }
 
+    /**
+     * Возвращает текст сообщения.
+     *
+     * @return текст
+     */
     public String getText() {
         return text;
     }
 
+    /**
+     * Возвращает кнопки.
+     *
+     * @return список рядов кнопок (может быть пустым)
+     */
     public List<List<Button>> getKeyboard() {
         return keyboard;
     }

@@ -70,6 +70,9 @@ public class EchoBot extends TelegramLongPollingBot {
             execute(EditMessageReplyMarkup.builder()
                     .chatId(String.valueOf(chatId))
                     .messageId(query.getMessage().getMessageId())
+                    .replyMarkup(InlineKeyboardMarkup.builder()
+                            .keyboard(new ArrayList<>())   // ← вот эта строчка
+                            .build())
                     .build());
         } catch (TelegramApiException e) {
             System.err.println("Не удалось убрать кнопки: " + e.getMessage());
