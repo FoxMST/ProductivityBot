@@ -3,8 +3,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Ответ логики бота: текст и (необязательно) inline-кнопки.
- * Не зависит от Telegram API.
+ * Ответ логики бота: текст и inline-кнопки.
  */
 public final class BotResponse {
 
