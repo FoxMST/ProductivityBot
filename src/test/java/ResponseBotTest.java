@@ -4,12 +4,12 @@ import org.junit.jupiter.api.Test;
 /**
  * Тесты для проверки логики формирования ответов.
  */
-class StructureBotTest {
+class ResponseBotTest {
 
     /**
      * Тестируемый объект.
      */
-    private final StructureBot bot = new StructureBot();
+    private final ResponseService bot = new ResponseService();
 
     /**
      * Проверяет, что на /start бот возвращает приветствие
