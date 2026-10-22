@@ -2,7 +2,11 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-
+/**
+ * Точка входа в приложение.
+ * Запускает бота продуктивности: читает конфигурацию
+ * и регистрирует бота в Telegram.
+ */
 public class Main {
 
     /**
@@ -15,7 +19,7 @@ public class Main {
 
 
         TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
-        api.registerBot(new EchoBot(token, username));
+        api.registerBot(new ProductivityTelegramBot(token, username));
 
         System.out.println("Бот запустился");
     }
