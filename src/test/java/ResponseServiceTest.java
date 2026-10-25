@@ -1,6 +1,6 @@
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Тесты для проверки логики формирования ответов.
  */
-class StructureBotTest {
+class ResponseServiceTest {
 
     private static final long CHAT = 1L;
 
@@ -26,12 +26,12 @@ class StructureBotTest {
     /**
      * Тестируемый объект (время зафиксировано: 10.12.2026).
      */
-    private StructureBot bot;
+    private ResponseService bot;
 
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(Instant.parse("2026-12-10T10:00:00Z"), ZoneOffset.UTC);
-        bot = new StructureBot(clock, new TaskStorage());
+        bot = new ResponseService(clock, new TaskStorage());
     }
 
     private String say(String text) {

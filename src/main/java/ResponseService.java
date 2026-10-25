@@ -6,9 +6,9 @@ import java.time.format.ResolverStyle;
 import java.util.*;
 
 /**
- * Логика бота.
+ * Формирует ответы на команды и произвольные сообщения.
  */
-public class StructureBot {
+public class ResponseService {
 
     private static final String START_MESSAGE =
             "👋 Привет! Я бот-продуктивность.\nНапиши /help, чтобы увидеть команды.";
@@ -47,7 +47,7 @@ public class StructureBot {
     /**
      * Бот с системными часами и пустым хранилищем.
      */
-    public StructureBot() {
+    public ResponseService() {
         this(Clock.systemDefaultZone(), new TaskStorage());
     }
 
@@ -55,7 +55,7 @@ public class StructureBot {
      * @param clock   часы
      * @param storage хранилище задач
      */
-    public StructureBot(Clock clock, TaskStorage storage) {
+    public ResponseService(Clock clock, TaskStorage storage) {
         this.clock = clock;
         this.storage = storage;
         this.dateFormat = DateTimeFormatter.ofPattern("dd.MM.uuuu")
