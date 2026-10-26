@@ -77,6 +77,11 @@ public class ResponseService {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
 
+        String command = extractCommand(text);
+        if (commands.contains(command)) {
+            return runCommand(command, s);
+        }
+
         if (state == State.ADD_TASK_WAIT_TEXT) {
             storage.addTask(text, LocalDate.now(clock));
             return finish(s, "✅ Задача добавлена.");
@@ -86,10 +91,7 @@ public class ResponseService {
             return finish(s, updated ? "✅ Задача обновлена." : NOT_FOUND_MESSAGE);
         }
 
-        String command = extractCommand(text);
-        if (commands.contains(command)) {
-            return runCommand(command, s);
-        }
+
 
         switch (state) {
             case IDLE:
@@ -122,15 +124,15 @@ public class ResponseService {
     public synchronized List<BotResponse> handleAction(long chatId, String actionId) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
-        Button.ButtonAction action = buttons.fromId(actionId);
+        ButtonAction action = buttons.fromId(actionId);
 
-        if (action == Button.ButtonAction.CANCEL && state != State.IDLE) {
+        if (action == ButtonAction.CANCEL && state != State.IDLE) {
             return finish(s, CANCEL_MESSAGE);
         }
-        if (state == State.DELETE_TASK_CONFIRM && action == Button.ButtonAction.DELETE_CONFIRM) {
+        if (state == State.DELETE_TASK_CONFIRM && action == ButtonAction.DELETE_CONFIRM) {
             return deleteTask(s, s.getPendingTaskId());
         }
-        if (state == State.EDIT_TASK_WAIT_FIELD && action == Button.ButtonAction.EDIT_TEXT) {
+        if (state == State.EDIT_TASK_WAIT_FIELD && action == ButtonAction.EDIT_TEXT) {
             return ask(s, State.EDIT_TASK_WAIT_NEW_TEXT,
                     buttons.cancel("Введите новый текст для задачи"));
         }

@@ -112,9 +112,9 @@ public class ProductivityTelegramBot extends TelegramLongPollingBot {
             return null;
         }
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        for (List<BotResponse.Button> row : response.getKeyboard()) {
+        for (List<ResponseButton> row : response.getKeyboard()) {
             List<InlineKeyboardButton> tgRow = new ArrayList<>();
-            for (BotResponse.Button button : row) {
+            for (ResponseButton button : row) {
                 tgRow.add(InlineKeyboardButton.builder()
                         .text(button.getText())
                         .callbackData(button.getActionId())
