@@ -85,7 +85,7 @@ class ResponseServiceTest {
      * @param responses список ответов бота
      * @return объединенный текст
      */
-    private static String join(List<BotResponse> responses) {
+    private String join(List<BotResponse> responses) {
         StringBuilder sb = new StringBuilder();
         for (BotResponse r : responses) {
             if (sb.length() > 0) {
