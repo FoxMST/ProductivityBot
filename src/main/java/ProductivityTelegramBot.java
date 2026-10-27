@@ -39,7 +39,6 @@ public class ProductivityTelegramBot extends TelegramLongPollingBot {
         this.botLogic = new ResponseService();
     }
 
-
     @Override
     public String getBotUsername() {
         return username;
