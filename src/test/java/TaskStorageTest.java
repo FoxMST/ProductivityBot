@@ -114,7 +114,7 @@ public class TaskStorageTest {
         Assertions.assertEquals(1, storage.getTasksByDate(day1).size());
     }
 
-    // ---------- getTaskById ----------
+    // ---------getTaskById ----------
 
     /**
      * По существующему ID возвращается задача.
@@ -135,7 +135,7 @@ public class TaskStorageTest {
         Assertions.assertNull(storage.getTaskById(999));
     }
 
-    // ---------- deleteTask ----------
+    // ---------- deleteTask---------
 
     /**
      * Удаление убирает задачу из обоих индексов (по ID и из списка дня).
@@ -172,7 +172,7 @@ public class TaskStorageTest {
         Assertions.assertFalse(storage.deleteTask(42));
     }
 
-    // ---------- updateTaskText ----------
+    // ----------updateTaskText------
 
     /**
      * Новый текст виден и через getTaskById, и через getTasksByDate
