@@ -2,110 +2,88 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Кнопки бота: действия (надпись + идентификатор) и готовые клавиатуры.
+ * Набор готовых ответов бота с inline-кнопками.
  */
-public final class Button {
+public class Button {
 
     /**
-     * Все действия кнопок бота. Для каждой кнопки надпись и идентификатор
-     * описываются в одном месте: идентификатор берётся из имени константы.
+     * Создает экземпляр набора готовых ответов.
+     * Класс не хранит состояния, поэтому один экземпляр может
+     * использоваться многократно для сборки любых типовых сообщений.
      */
-    public enum ButtonAction {
-        CANCEL("❌ Отмена"),
-        TODAY("📅 Сегодня"),
-        TOMORROW("📅 Завтра"),
-        CUSTOM_DATE("📅 Ввести дату"),
-        DELETE_CONFIRM("🗑 Удалить"),
-        EDIT_TEXT("📝 Текст");
-
-        /**
-         * Надпись на кнопке.
-         */
-        private final String label;
-
-        ButtonAction(String label) {
-            this.label = label;
-        }
-
-        /**
-         * @return надпись, которую видит пользователь
-         */
-        public String label() {
-            return label;
-        }
-
-        /**
-         * @return идентификатор, который придёт логике при нажатии кнопки
-         */
-        public String id() {
-            return name();
-        }
-
-        /**
-         * Находит действие по идентификатору.
-         *
-         * @param id идентификатор из нажатой кнопки
-         * @return действие или null, если кнопка неизвестна
-         */
-        public static ButtonAction fromId(String id) {
-            if (id == null) {
-                return null;
-            }
-            try {
-                return valueOf(id);
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
-        }
-    }
-
-    private Button() {
+    public Button() {
     }
 
     /**
      * Сообщение с единственной кнопкой [❌ Отмена].
+     *
+     * @param text текст сообщения
+     * @return ответ
      */
-    public static BotResponse cancel(String text) {
-        return BotResponse.withButtons(text, rows(
-                row(button(ButtonAction.CANCEL))));
+    public BotResponse cancel(String text) {
+        return new BotResponse(text, rows(row(button(ButtonAction.CANCEL))));
     }
 
     /**
-     * Сообщение с выбором дня: [Сегодня] [Завтра] [Ввести дату] [❌ Отмена].
+     * Сообщение с выбором дня.
+     *
+     * @param text текст сообщения
+     * @return ответ
      */
-    public static BotResponse dayChoice(String text) {
-        return BotResponse.withButtons(text, rows(
-                row(button(ButtonAction.TODAY), button(ButtonAction.TOMORROW)),
+    public BotResponse dayChoice(String text) {
+        return new BotResponse(text, rows(row(button(ButtonAction.TODAY), button(ButtonAction.TOMORROW)),
                 row(button(ButtonAction.CUSTOM_DATE), button(ButtonAction.CANCEL))));
     }
 
     /**
-     * Подтверждение удаления: [🗑 Удалить] [❌ Отмена].
+     * Подтверждение удаления.
+     *
+     * @param text текст сообщения
+     * @return ответ
      */
-    public static BotResponse deleteConfirm(String text) {
-        return BotResponse.withButtons(text, rows(
+    public BotResponse deleteConfirm(String text) {
+        return new BotResponse(text, rows(
                 row(button(ButtonAction.DELETE_CONFIRM), button(ButtonAction.CANCEL))));
     }
 
     /**
-     * Выбор поля для редактирования: [📝 Текст] [❌ Отмена].
-     * Сюда же в будущем добавятся кнопки «Дата», «Время», «Дедлайн».
+     * Выбор поля для редактирования.
+     *
+     * @param text текст сообщения
+     * @return ответ
      */
-    public static BotResponse editField(String text) {
-        return BotResponse.withButtons(text, rows(
+    public BotResponse editField(String text) {
+        return new BotResponse(text, rows(
                 row(button(ButtonAction.EDIT_TEXT), button(ButtonAction.CANCEL))));
     }
 
-    private static BotResponse.Button button(ButtonAction action) {
-        return new BotResponse.Button(action.label(), action.id());
+    /**
+     * Находит действие по идентификатору.
+     *
+     * @param id идентификатор из нажатой кнопки
+     * @return действие или null, если кнопка неизвестна
+     */
+    public ButtonAction fromId(String id) {
+        if (id == null) {
+            return null;
+        }
+        try {
+            return ButtonAction.valueOf(id);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
-    private static List<BotResponse.Button> row(BotResponse.Button... buttons) {
+    private ResponseButton button(ButtonAction action) {
+        return new ResponseButton(action.label(), action.id());
+    }
+
+    private List<ResponseButton> row(ResponseButton... buttons) {
         return Arrays.asList(buttons);
     }
 
     @SafeVarargs
-    private static List<List<BotResponse.Button>> rows(List<BotResponse.Button>... rows) {
+    private final List<List<ResponseButton>> rows(List<ResponseButton>... rows) {
         return Arrays.asList(rows);
     }
 }

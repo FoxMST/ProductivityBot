@@ -3,35 +3,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Ответ логики бота: текст и (необязательно) inline-кнопки.
- * Не зависит от Telegram API.
+ * Класс ответа логики бота: текст и inline-кнопки.
  */
 public final class BotResponse {
-
-    /**
-     * Inline-кнопка.
-     */
-    public static final class Button {
-        private final String text;
-        private final String actionId;
-
-        /**
-         * @param text         надпись на кнопке
-         * @param actionId     идентификатор действия, который придёт логике при нажатии
-         */
-        public Button(String text, String actionId) {
-            this.text = text;
-            this.actionId = actionId;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public String getActionId() {
-            return actionId;
-        }
-    }
 
     /**
      * Текст сообщения.
@@ -40,32 +14,43 @@ public final class BotResponse {
     /**
      * Кнопки: список рядов.
      */
-    private final List<List<Button>> keyboard;
-
-    private BotResponse(String text, List<List<Button>> keyboard) {
-        this.text = text;
-        this.keyboard = keyboard;
-    }
+    private final List<List<ResponseButton>> keyboard;
 
     /**
      * Ответ без кнопок.
+     *
+     * @param text текст сообщения
      */
-    public static BotResponse of(String text) {
-        return new BotResponse(text, Collections.<List<Button>>emptyList());
+    public BotResponse(String text) {
+        this(text, Collections.<List<ResponseButton>>emptyList());
     }
 
     /**
      * Ответ с кнопками.
+     *
+     * @param text     текст сообщения
+     * @param keyboard кнопки (список рядов)
      */
-    public static BotResponse withButtons(String text, List<List<Button>> keyboard) {
-        return new BotResponse(text, new ArrayList<>(keyboard));
+    public BotResponse(String text, List<List<ResponseButton>> keyboard) {
+        this.text = text;
+        this.keyboard = new ArrayList<>(keyboard);
     }
 
+    /**
+     * Возвращает текст сообщения.
+     *
+     * @return текст
+     */
     public String getText() {
         return text;
     }
 
-    public List<List<Button>> getKeyboard() {
+    /**
+     * Возвращает кнопки.
+     *
+     * @return список рядов кнопок (может быть пустым)
+     */
+    public List<List<ResponseButton>> getKeyboard() {
         return keyboard;
     }
 }
