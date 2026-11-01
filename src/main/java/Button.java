@@ -54,7 +54,31 @@ public class Button {
      */
     public BotResponse editField(String text) {
         return new BotResponse(text, rows(
-                row(button(ButtonAction.EDIT_TEXT), button(ButtonAction.CANCEL))));
+                row(button(ButtonAction.EDIT_TEXT), button(ButtonAction.EDIT_DATETIME)),
+                row(button(ButtonAction.EDIT_DEADLINE), button(ButtonAction.CANCEL))));
+    }
+
+    /**
+     * Вопрос с ответами Да / Нет.
+     *
+     * @param text текст сообщения
+     * @return ответ
+     */
+    public BotResponse yesNo(String text) {
+        return new BotResponse(text, rows(
+                row(button(ButtonAction.YES), button(ButtonAction.NO), button(ButtonAction.CANCEL))));
+    }
+
+    /**
+     * Сообщение с кнопкой «Пометить выполненные задачи».
+     *
+     * @param text текст сообщения
+     * @return ответ
+     */
+    public BotResponse markDone(String text) {
+        return new BotResponse(text, rows(
+                row(button(ButtonAction.MARK_DONE)),
+                row(button(ButtonAction.CANCEL))));
     }
 
     /**

@@ -11,7 +11,12 @@ public enum ButtonAction {
     TOMORROW("📅 Завтра"),
     CUSTOM_DATE("📅 Ввести дату"),
     DELETE_CONFIRM("🗑 Удалить"),
-    EDIT_TEXT("📝 Текст");
+    EDIT_TEXT("📝 Текст"),
+    EDIT_DATETIME("📅 Дату/время"),
+    EDIT_DEADLINE("⏰ Дедлайн"),
+    YES("Да"),
+    NO("Нет"),
+    MARK_DONE("🖊️ Пометить выполненные задачи");
 
     /**
      * Надпись на кнопке.
