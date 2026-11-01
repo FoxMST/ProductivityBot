@@ -11,6 +11,26 @@ public enum State {
      */
     ADD_TASK_WAIT_TEXT,
     /**
+     * Ожидание даты новой задачи.
+     */
+    ADD_TASK_WAIT_DATE,
+    /**
+     * Вопрос «добавить время начала?» (кнопки Да/Нет).
+     */
+    ADD_TASK_ASK_TIME,
+    /**
+     * Ожидание времени (и/или даты) начала.
+     */
+    ADD_TASK_WAIT_TIME,
+    /**
+     * Вопрос «добавить дедлайн?» (кнопки Да/Нет).
+     */
+    ADD_TASK_ASK_DEADLINE,
+    /**
+     * Ожидание даты/времени дедлайна.
+     */
+    ADD_TASK_WAIT_DEADLINE,
+    /**
      * Ожидание выбора дня для показа списка.
      */
     SHOW_TASKLIST_WAIT_DATE,
@@ -53,5 +73,21 @@ public enum State {
     /**
      * Ожидание нового текста задачи.
      */
-    EDIT_TASK_WAIT_NEW_TEXT
+    EDIT_TASK_WAIT_NEW_TEXT,
+    /**
+     * Ожидание новой даты/времени задачи.
+     */
+    EDIT_TASK_WAIT_NEW_DATETIME,
+    /**
+     * Ожидание нового дедлайна задачи.
+     */
+    EDIT_TASK_WAIT_NEW_DEADLINE,
+    /**
+     * Показан список, ожидание нажатия «Пометить выполненные».
+     */
+    MARK_DONE_WAIT_BUTTON,
+    /**
+     * Ожидание номеров задач, которые нужно пометить выполненными.
+     */
+    MARK_DONE_WAIT_NUMBERS
 }
