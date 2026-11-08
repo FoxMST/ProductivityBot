@@ -23,14 +23,23 @@ public class ResponseService {
                     + "/delete_task — удалить задачу\n"
                     + "/mark_as_done — отметить выполненные\n"
                     + "Во время любой команды можно нажать ❌ Отмена.\n"
-                    + "Или просто напиши что-нибудь — я повторю.";
-    private static final String CANCEL_MESSAGE = "Черновик задачи удален. Введите любую команду.";
-    private static final String STALE_MESSAGE = "Это действие уже недоступно. Введите любую команду.";
-    private static final String BAD_DATE_MESSAGE = "❌ Неправильный формат даты. Введите ДД.ММ.ГГГГ";
-    private static final String BAD_TIME_MESSAGE = "❌ Неправильный формат времени. Введите ЧЧ:ММ";
+                    + "Просто напиши что-нибудь — я повторю.";
+    private static final String CANCEL_MESSAGE =
+            "Черновик задачи удален. Введите любую команду.";
+    private static final String STALE_MESSAGE =
+            "Это действие уже недоступно. Введите любую команду.";
+    private static final String BAD_DATE_MESSAGE =
+            "❌ Неправильный формат. Введите ДД.ММ.ГГГГ";
+    private static final String BAD_TIME_MESSAGE =
+            "❌ Неправильный формат. Введите ЧЧ:ММ";
     private static final String NOT_FOUND_MESSAGE = "❌ Задача не найдена.";
 
-    private enum Flow {SHOW, DELETE, EDIT, MARK_DONE}
+    /**
+     * Какая команда выполняется в текущем диалоге.
+     */
+    private enum Flow {
+        SHOW, DELETE, EDIT, MARK_DONE
+    }
 
     private final TaskStorage storage;
     private final Clock clock;
@@ -40,21 +49,37 @@ public class ResponseService {
     private final Button buttons;
     private final Map<Long, UserSession> sessions;
 
+    /**
+     * Бот с системными часами и пустым хранилищем.
+     */
     public ResponseService() {
         this(Clock.systemDefaultZone(), new TaskStorage());
     }
 
+    /**
+     * @param clock   часы
+     * @param storage хранилище задач
+     */
     public ResponseService(Clock clock, TaskStorage storage) {
         this.clock = clock;
         this.storage = storage;
-        this.dateFormat = DateTimeFormatter.ofPattern("dd.MM.uuuu").withResolverStyle(ResolverStyle.STRICT);
+        this.dateFormat = DateTimeFormatter.ofPattern("dd.MM.uuuu")
+                .withResolverStyle(ResolverStyle.STRICT);
         this.timeFormat = DateTimeFormatter.ofPattern("HH:mm");
         this.commands = new HashSet<>(Arrays.asList(
-                "/start", "/help", "/add_task", "/show_tasklist", "/delete_task", "/edit_task", "/mark_as_done"));
+                "/start", "/help", "/add_task", "/show_tasklist",
+                "/delete_task", "/edit_task", "/mark_as_done"));
         this.buttons = new Button();
         this.sessions = new HashMap<>();
     }
 
+    /**
+     * Обрабатывает текстовое сообщение пользователя.
+     *
+     * @param chatId ID чата
+     * @param text   текст сообщения
+     * @return ответы бота по порядку
+     */
     public synchronized List<BotResponse> handleMessage(long chatId, String text) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
@@ -64,11 +89,11 @@ public class ResponseService {
             return runCommand(command, s);
         }
 
-        // Обработка текста в зависимости от состояния
         switch (state) {
             case ADD_TASK_WAIT_TEXT:
                 s.setPendingText(text);
-                return ask(s, State.ADD_TASK_WAIT_DATE, buttons.cancel("📅 Введите дату задачи (ДД.ММ.ГГГГ)"));
+                return ask(s, State.ADD_TASK_WAIT_DATE,
+                        buttons.cancel("📅 Введите дату задачи (ДД.ММ.ГГГГ)"));
             case ADD_TASK_WAIT_DATE:
                 return handleAddTaskDate(s, text);
             case ADD_TASK_WAIT_TIME:
@@ -97,10 +122,18 @@ public class ResponseService {
             case EDIT_TASK_WAIT_LIST_NUMBER:
                 return onNumberInput(s, text);
             default:
-                return reply(buttons.cancel("Выберите действие кнопками или нажмите ❌ Отмена."));
+                return reply(buttons.cancel(
+                        "Выберите действие кнопками или нажмите ❌ Отмена."));
         }
     }
 
+    /**
+     * Обрабатывает действие, выбранное нажатием кнопки.
+     *
+     * @param chatId   ID чата
+     * @param actionId идентификатор действия кнопки
+     * @return ответы бота по порядку
+     */
     public synchronized List<BotResponse> handleAction(long chatId, String actionId) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
@@ -110,32 +143,45 @@ public class ResponseService {
             return finish(s, CANCEL_MESSAGE);
         }
 
-        // Обработка кнопок Да/Нет для добавления
         if (state == State.ADD_TASK_ASK_TIME) {
-            if (action == ButtonAction.YES)
-                return ask(s, State.ADD_TASK_WAIT_TIME, buttons.cancel("⏰ Введите время (ЧЧ:ММ)"));
-            if (action == ButtonAction.NO)
-                return ask(s, State.ADD_TASK_ASK_DEADLINE, buttons.yesNo("Добавить дедлайн к задаче?"));
+            if (action == ButtonAction.YES) {
+                return ask(s, State.ADD_TASK_WAIT_TIME,
+                        buttons.cancel("⏰ Введите время (ЧЧ:ММ)"));
+            }
+            if (action == ButtonAction.NO) {
+                return ask(s, State.ADD_TASK_ASK_DEADLINE,
+                        buttons.yesNo("Добавить дедлайн к задаче?"));
+            }
         }
+
         if (state == State.ADD_TASK_ASK_DEADLINE) {
-            if (action == ButtonAction.YES)
-                return ask(s, State.ADD_TASK_WAIT_DEADLINE, buttons.cancel("⏰ Введите дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ)"));
-            if (action == ButtonAction.NO) return createTask(s);
+            if (action == ButtonAction.YES) {
+                return ask(s, State.ADD_TASK_WAIT_DEADLINE,
+                        buttons.cancel("⏰ Введите дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+            }
+            if (action == ButtonAction.NO) {
+                return createTask(s);
+            }
         }
 
-        // Обработка кнопок Да/Нет для дедлайна (если был выбран)
         if (state == State.EDIT_TASK_WAIT_FIELD && action != null) {
-            if (action == ButtonAction.EDIT_TEXT)
-                return ask(s, State.EDIT_TASK_WAIT_NEW_TEXT, buttons.cancel("Введите новый текст"));
-            if (action == ButtonAction.EDIT_DATETIME)
-                return ask(s, State.EDIT_TASK_WAIT_NEW_DATETIME, buttons.cancel("Введите дату/время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
-            if (action == ButtonAction.EDIT_DEADLINE)
-                return ask(s, State.EDIT_TASK_WAIT_NEW_DEADLINE, buttons.cancel("Введите новый дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+            if (action == ButtonAction.EDIT_TEXT) {
+                return ask(s, State.EDIT_TASK_WAIT_NEW_TEXT,
+                        buttons.cancel("Введите новый текст"));
+            }
+            if (action == ButtonAction.EDIT_DATETIME) {
+                return ask(s, State.EDIT_TASK_WAIT_NEW_DATETIME,
+                        buttons.cancel("Введите дату и время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+            }
+            if (action == ButtonAction.EDIT_DEADLINE) {
+                return ask(s, State.EDIT_TASK_WAIT_NEW_DEADLINE,
+                        buttons.cancel("Введите новый дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+            }
         }
 
-        // Обработка кнопки Пометки Done из списка
         if (action == ButtonAction.MARK_DONE && state == State.MARK_DONE_WAIT_BUTTON) {
-            return ask(s, State.MARK_DONE_WAIT_NUMBERS, buttons.cancel("Введите номера задач через пробел (например: 1 2)"));
+            return ask(s, State.MARK_DONE_WAIT_NUMBERS,
+                    buttons.cancel("Введите номера задач через пробел (например: 1 2)"));
         }
 
         if (state == State.DELETE_TASK_CONFIRM && action == ButtonAction.DELETE_CONFIRM) {
@@ -169,24 +215,27 @@ public class ResponseService {
             case "/help":
                 return reply(new BotResponse(HELP_MESSAGE));
             case "/add_task":
-                return ask(s, State.ADD_TASK_WAIT_TEXT, buttons.cancel("📝 Введите текст задачи"));
+                return ask(s, State.ADD_TASK_WAIT_TEXT,
+                        buttons.cancel("📝 Введите текст задачи"));
             case "/show_tasklist":
-                return ask(s, State.SHOW_TASKLIST_WAIT_DATE, buttons.dayChoice("За какой день показать задачи?"));
+                return ask(s, State.SHOW_TASKLIST_WAIT_DATE,
+                        buttons.dayChoice("За какой день показать задачи?"));
             case "/delete_task":
-                return ask(s, State.DELETE_TASK_WAIT_ID_OR_DATE, buttons.dayChoice("Отправьте ID задачи или выберите день для удаления:"));
+                return ask(s, State.DELETE_TASK_WAIT_ID_OR_DATE, buttons.dayChoice(
+                        "Отправьте ID задачи или выберите день для удаления:"));
             case "/mark_as_done":
                 return showDay(s, LocalDate.now(clock), Flow.MARK_DONE);
             default:
-                return ask(s, State.EDIT_TASK_WAIT_ID_OR_DATE, buttons.dayChoice("Отправьте ID задачи или выберите день для редактирования:"));
+                return ask(s, State.EDIT_TASK_WAIT_ID_OR_DATE, buttons.dayChoice(
+                        "Отправьте ID задачи или выберите день для редактирования:"));
         }
     }
-
-    // --- ЛОГИКА ДОБАВЛЕНИЯ ---
 
     private List<BotResponse> handleAddTaskDate(UserSession s, String text) {
         try {
             s.setSelectedDate(LocalDate.parse(text.trim(), dateFormat));
-            return ask(s, State.ADD_TASK_ASK_TIME, buttons.yesNo("Добавить рекомендуемое время начала?"));
+            return ask(s, State.ADD_TASK_ASK_TIME,
+                    buttons.yesNo("Добавить рекомендуемое время начала?"));
         } catch (DateTimeParseException e) {
             return reply(buttons.cancel(BAD_DATE_MESSAGE));
         }
@@ -195,7 +244,8 @@ public class ResponseService {
     private List<BotResponse> handleAddTaskTime(UserSession s, String text) {
         try {
             s.setPendingTime(LocalTime.parse(text.trim(), timeFormat));
-            return ask(s, State.ADD_TASK_ASK_DEADLINE, buttons.yesNo("Добавить дедлайн к задаче?"));
+            return ask(s, State.ADD_TASK_ASK_DEADLINE,
+                    buttons.yesNo("Добавить дедлайн к задаче?"));
         } catch (DateTimeParseException e) {
             return reply(buttons.cancel(BAD_TIME_MESSAGE));
         }
@@ -203,7 +253,6 @@ public class ResponseService {
 
     private List<BotResponse> handleAddTaskDeadline(UserSession s, String text) {
         try {
-            // Парсим ДД.ММ.ГГГГ ЧЧ:ММ
             String[] parts = text.trim().split("\\s+");
             LocalDate dDate = LocalDate.parse(parts[0], dateFormat);
             LocalTime dTime = parts.length > 1 ? LocalTime.parse(parts[1], timeFormat) : null;
@@ -211,26 +260,29 @@ public class ResponseService {
             s.setPendingDeadlineTime(dTime);
             return createTask(s);
         } catch (Exception e) {
-            return reply(buttons.cancel("❌ Ошибка. Введите ДД.ММ.ГГГГ ЧЧ:ММ или просто ДД.ММ.ГГГГ"));
+            return reply(buttons.cancel(
+                    "❌ Ошибка. Введите ДД.ММ.ГГГГ ЧЧ:ММ или ДД.ММ.ГГГГ"));
         }
     }
 
     private List<BotResponse> createTask(UserSession s) {
-        storage.addTask(s.getPendingText(), s.getSelectedDate(), s.getPendingTime(), s.getPendingDeadlineDate(), s.getPendingDeadlineTime());
+        storage.addTask(s.getPendingText(), s.getSelectedDate(),
+                s.getPendingTime(), s.getPendingDeadlineDate(),
+                s.getPendingDeadlineTime());
         return finish(s, "✅ Задача добавлена.");
     }
-
-    // --- ЛОГИКА РЕДАКТИРОВАНИЯ ---
 
     private List<BotResponse> handleEditDateTime(UserSession s, String text) {
         try {
             String[] parts = text.trim().split("\\s+");
             LocalDate date = LocalDate.parse(parts[0], dateFormat);
-            LocalTime time = parts.length > 1 ? LocalTime.parse(parts[1], timeFormat) : null;
+            LocalTime time = parts.length > 1
+                    ? LocalTime.parse(parts[1], timeFormat) : null;
             storage.updateTaskDateTime(s.getPendingTaskId(), date, time);
             return finish(s, "✅ Задача обновлена.");
         } catch (Exception e) {
-            return reply(buttons.cancel("❌ Ошибка. Введите ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ"));
+            return reply(buttons.cancel(
+                    "❌ Ошибка. Введите ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ"));
         }
     }
 
@@ -238,15 +290,15 @@ public class ResponseService {
         try {
             String[] parts = text.trim().split("\\s+");
             LocalDate date = LocalDate.parse(parts[0], dateFormat);
-            LocalTime time = parts.length > 1 ? LocalTime.parse(parts[1], timeFormat) : null;
+            LocalTime time = parts.length > 1
+                    ? LocalTime.parse(parts[1], timeFormat) : null;
             storage.updateTaskDeadline(s.getPendingTaskId(), date, time);
             return finish(s, "✅ Задача обновлена.");
         } catch (Exception e) {
-            return reply(buttons.cancel("❌ Ошибка. Введите ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ"));
+            return reply(buttons.cancel(
+                    "❌ Ошибка. Введите ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ"));
         }
     }
-
-    // --- ЛОГИКА MARK DONE ---
 
     private List<BotResponse> handleMarkDoneNumbers(UserSession s, String text) {
         List<Task> tasks = storage.getTasksByDate(s.getSelectedDate());
@@ -268,8 +320,6 @@ public class ResponseService {
         return finish(s, "✅ Задачи помечены как выполненные (" + count + " шт.)");
     }
 
-    // --- ВЫВОД СПИСКА ---
-
     private List<BotResponse> showDay(UserSession s, LocalDate date, Flow flow) {
         List<Task> tasks = storage.getTasksByDate(date);
         String day = dateFormat.format(date);
@@ -278,10 +328,11 @@ public class ResponseService {
             return finish(s, "📋 На " + day + " задач нет.");
         }
 
-        // Фильтруем для MARK_DONE, если нужно (по ТЗ только невыполненные)
-        List<Task> displayTasks = new ArrayList<>();
+        List<Task> displayTasks = new java.util.ArrayList<>();
         for (Task t : tasks) {
-            if (flow == Flow.MARK_DONE && t.isDone()) continue;
+            if (flow == Flow.MARK_DONE && t.isDone()) {
+                continue;
+            }
             displayTasks.add(t);
         }
 
@@ -289,34 +340,40 @@ public class ResponseService {
             return finish(s, "📋 На " + day + " нет невыполненных задач.");
         }
 
-        StringBuilder sb = new StringBuilder("📋 Задачи на " + day + ". Формат: (Номер) - (Задача) - (ID) - (Время) - (Дедлайн) - (Статус):");
+        StringBuilder sb = new StringBuilder(
+                "📋 Задачи на " + day + ". Формат: (Номер) - (Задача) - (ID) - (Время) - (Дедлайн) - (Статус):");
         for (int i = 0; i < displayTasks.size(); i++) {
             Task t = displayTasks.get(i);
             sb.append("\n").append(i + 1).append(". ").append(t.getText())
                     .append(" - ").append(t.getId())
-                    .append(" - ").append(t.getDate()).append(t.getStartTime() != null ? " " + t.getStartTime() : "")
-                    .append(t.getDeadlineDate() != null ? " → DL: " + t.getDeadlineDate() + (t.getDeadlineTime() != null ? " " + t.getDeadlineTime() : "") : "")
+                    .append(" - ").append(dateFormat.format(t.getDate()))
+                    .append(t.getStartTime() != null ? " " + t.getStartTime() : "")
+                    .append(t.getDeadlineDate() != null
+                            ? " → DL: " + dateFormat.format(t.getDeadlineDate())
+                            + (t.getDeadlineTime() != null ? " " + t.getDeadlineTime() : "")
+                            : "")
                     .append(" - ").append(t.isDone() ? "✅" : "⭕");
         }
 
-        BotResponse list = new BotResponse(sb.toString());
-        s.setSelectedDate(date); // сохраняем дату для следующих шагов
+        s.setSelectedDate(date);
 
+        // ИСПРАВЛЕНИЕ ЗДЕСЬ: отдаем один ответ с текстом и кнопками
         if (flow == Flow.SHOW) {
             s.setState(State.MARK_DONE_WAIT_BUTTON);
-            return reply(list, buttons.markDone("Что-то еще?"));
+            return reply(buttons.markDone(sb.toString()));
         }
         if (flow == Flow.MARK_DONE) {
             s.setState(State.MARK_DONE_WAIT_NUMBERS);
-            return reply(list, buttons.cancel("Выберите номера задач через пробел."));
+            return reply(buttons.cancel("Выберите номера задач через пробел.")); // Тут просто кнопка отмены
         }
 
         boolean delete = flow == Flow.DELETE;
-        s.setState(delete ? State.DELETE_TASK_WAIT_LIST_NUMBER : State.EDIT_TASK_WAIT_LIST_NUMBER);
-        return reply(list, buttons.cancel("Напишите номер задачи, которую хотите " + (delete ? "удалить." : "изменить.")));
+        s.setState(delete ? State.DELETE_TASK_WAIT_LIST_NUMBER
+                : State.EDIT_TASK_WAIT_LIST_NUMBER);
+        return reply(new BotResponse(sb.toString()),
+                buttons.cancel("Напишите номер задачи, которую хотите "
+                        + (delete ? "удалить." : "изменить.")));
     }
-
-    // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ (ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ) ---
 
     private List<BotResponse> onDateInput(UserSession s, String text) {
         try {
@@ -330,7 +387,8 @@ public class ResponseService {
         List<Task> tasks = storage.getTasksByDate(s.getSelectedDate());
         Integer number = parseInt(text);
         if (number == null || number < 1 || number > tasks.size()) {
-            return reply(buttons.cancel("❌ Введите номер задачи из списка (от 1 до " + tasks.size() + ")."));
+            return reply(buttons.cancel("❌ Введите номер задачи из списка (от 1 до "
+                    + tasks.size() + ")."));
         }
         return chooseTask(s, tasks.get(number - 1), true);
     }
@@ -351,8 +409,11 @@ public class ResponseService {
         if (flowOf(s.getState()) == Flow.EDIT) {
             return ask(s, State.EDIT_TASK_WAIT_FIELD, buttons.editField("Что изменить?"));
         }
-        if (byListNumber) return deleteTask(s, task.getId());
-        return ask(s, State.DELETE_TASK_CONFIRM, buttons.deleteConfirm("Удалить задачу «" + task.getText() + "» ?"));
+        if (byListNumber) {
+            return deleteTask(s, task.getId());
+        }
+        return ask(s, State.DELETE_TASK_CONFIRM,
+                buttons.deleteConfirm("Удалить задачу «" + task.getText() + "» ?"));
     }
 
     private List<BotResponse> deleteTask(UserSession s, int id) {
@@ -391,9 +452,15 @@ public class ResponseService {
 
     private Flow flowOf(State state) {
         String name = state.name();
-        if (name.startsWith("SHOW")) return Flow.SHOW;
-        if (name.startsWith("DELETE")) return Flow.DELETE;
-        if (name.startsWith("MARK")) return Flow.MARK_DONE;
+        if (name.startsWith("SHOW")) {
+            return Flow.SHOW;
+        }
+        if (name.startsWith("DELETE")) {
+            return Flow.DELETE;
+        }
+        if (name.startsWith("MARK")) {
+            return Flow.MARK_DONE;
+        }
         return name.startsWith("EDIT") ? Flow.EDIT : null;
     }
 
