@@ -34,9 +34,6 @@ public class ResponseService {
             "❌ Неправильный формат. Введите ЧЧ:ММ";
     private static final String NOT_FOUND_MESSAGE = "❌ Задача не найдена.";
 
-    /**
-     * Какая команда выполняется в текущем диалоге.
-     */
     private enum Flow {
         SHOW, DELETE, EDIT, MARK_DONE
     }
@@ -49,17 +46,10 @@ public class ResponseService {
     private final Button buttons;
     private final Map<Long, UserSession> sessions;
 
-    /**
-     * Бот с системными часами и пустым хранилищем.
-     */
     public ResponseService() {
         this(Clock.systemDefaultZone(), new TaskStorage());
     }
 
-    /**
-     * @param clock   часы
-     * @param storage хранилище задач
-     */
     public ResponseService(Clock clock, TaskStorage storage) {
         this.clock = clock;
         this.storage = storage;
@@ -73,13 +63,6 @@ public class ResponseService {
         this.sessions = new HashMap<>();
     }
 
-    /**
-     * Обрабатывает текстовое сообщение пользователя.
-     *
-     * @param chatId ID чата
-     * @param text   текст сообщения
-     * @return ответы бота по порядку
-     */
     public synchronized List<BotResponse> handleMessage(long chatId, String text) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
@@ -127,13 +110,6 @@ public class ResponseService {
         }
     }
 
-    /**
-     * Обрабатывает действие, выбранное нажатием кнопки.
-     *
-     * @param chatId   ID чата
-     * @param actionId идентификатор действия кнопки
-     * @return ответы бота по порядку
-     */
     public synchronized List<BotResponse> handleAction(long chatId, String actionId) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
@@ -146,7 +122,7 @@ public class ResponseService {
         if (state == State.ADD_TASK_ASK_TIME) {
             if (action == ButtonAction.YES) {
                 return ask(s, State.ADD_TASK_WAIT_TIME,
-                        buttons.cancel("⏰ Введите время (ЧЧ:ММ)"));
+                        buttons.cancel("⏰ Введите время (ЧЧ:ММ) или дату и время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
             }
             if (action == ButtonAction.NO) {
                 return ask(s, State.ADD_TASK_ASK_DEADLINE,
@@ -157,7 +133,7 @@ public class ResponseService {
         if (state == State.ADD_TASK_ASK_DEADLINE) {
             if (action == ButtonAction.YES) {
                 return ask(s, State.ADD_TASK_WAIT_DEADLINE,
-                        buttons.cancel("⏰ Введите дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+                        buttons.cancel("⏳ Введите дедлайн: ДД.ММ.ГГГГ ЧЧ:ММ, или только ДД.ММ.ГГГГ, или только ЧЧ:ММ"));
             }
             if (action == ButtonAction.NO) {
                 return createTask(s);
@@ -171,11 +147,11 @@ public class ResponseService {
             }
             if (action == ButtonAction.EDIT_DATETIME) {
                 return ask(s, State.EDIT_TASK_WAIT_NEW_DATETIME,
-                        buttons.cancel("Введите дату и время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+                        buttons.cancel("Введите новую дату и/или время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
             }
             if (action == ButtonAction.EDIT_DEADLINE) {
                 return ask(s, State.EDIT_TASK_WAIT_NEW_DEADLINE,
-                        buttons.cancel("Введите новый дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+                        buttons.cancel("Введите новый дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ) или только его часть"));
             }
         }
 
@@ -243,7 +219,18 @@ public class ResponseService {
 
     private List<BotResponse> handleAddTaskTime(UserSession s, String text) {
         try {
-            s.setPendingTime(LocalTime.parse(text.trim(), timeFormat));
+            String[] parts = text.trim().split("\\s+");
+            // Ищем время (содержит двоеточие)
+            LocalTime time = null;
+            for (String part : parts) {
+                if (part.contains(":")) {
+                    time = LocalTime.parse(part, timeFormat);
+                    break;
+                }
+            }
+            if (time == null) throw new DateTimeParseException("No time", text, 0);
+
+            s.setPendingTime(time);
             return ask(s, State.ADD_TASK_ASK_DEADLINE,
                     buttons.yesNo("Добавить дедлайн к задаче?"));
         } catch (DateTimeParseException e) {
@@ -254,14 +241,25 @@ public class ResponseService {
     private List<BotResponse> handleAddTaskDeadline(UserSession s, String text) {
         try {
             String[] parts = text.trim().split("\\s+");
-            LocalDate dDate = LocalDate.parse(parts[0], dateFormat);
-            LocalTime dTime = parts.length > 1 ? LocalTime.parse(parts[1], timeFormat) : null;
+            LocalDate dDate = null;
+            LocalTime dTime = null;
+            for (String part : parts) {
+                if (part.contains(".")) {
+                    dDate = LocalDate.parse(part, dateFormat);
+                } else if (part.contains(":")) {
+                    dTime = LocalTime.parse(part, timeFormat);
+                }
+            }
+            // Если ввели только время, ставим дедлайн на дату самой задачи
+            if (dDate == null && dTime != null) dDate = s.getSelectedDate();
+
+            if (dDate == null && dTime == null) throw new Exception("Empty input");
+
             s.setPendingDeadlineDate(dDate);
             s.setPendingDeadlineTime(dTime);
             return createTask(s);
         } catch (Exception e) {
-            return reply(buttons.cancel(
-                    "❌ Ошибка. Введите ДД.ММ.ГГГГ ЧЧ:ММ или ДД.ММ.ГГГГ"));
+            return reply(buttons.cancel("❌ Ошибка. Введите ДД.ММ.ГГГГ ЧЧ:ММ, или только ДД.ММ.ГГГГ, или только ЧЧ:ММ"));
         }
     }
 
@@ -274,29 +272,39 @@ public class ResponseService {
 
     private List<BotResponse> handleEditDateTime(UserSession s, String text) {
         try {
+            Task task = storage.getTaskById(s.getPendingTaskId());
+            LocalDate date = task.getDate();
+            LocalTime time = task.getStartTime();
+
             String[] parts = text.trim().split("\\s+");
-            LocalDate date = LocalDate.parse(parts[0], dateFormat);
-            LocalTime time = parts.length > 1
-                    ? LocalTime.parse(parts[1], timeFormat) : null;
+            for (String part : parts) {
+                if (part.contains(".")) date = LocalDate.parse(part, dateFormat);
+                if (part.contains(":")) time = LocalTime.parse(part, timeFormat);
+            }
+
             storage.updateTaskDateTime(s.getPendingTaskId(), date, time);
             return finish(s, "✅ Задача обновлена.");
         } catch (Exception e) {
-            return reply(buttons.cancel(
-                    "❌ Ошибка. Введите ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ"));
+            return reply(buttons.cancel("❌ Ошибка. Введите дату и/или время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
         }
     }
 
     private List<BotResponse> handleEditDeadline(UserSession s, String text) {
         try {
+            Task task = storage.getTaskById(s.getPendingTaskId());
+            LocalDate date = task.getDeadlineDate();
+            LocalTime time = task.getDeadlineTime();
+
             String[] parts = text.trim().split("\\s+");
-            LocalDate date = LocalDate.parse(parts[0], dateFormat);
-            LocalTime time = parts.length > 1
-                    ? LocalTime.parse(parts[1], timeFormat) : null;
+            for (String part : parts) {
+                if (part.contains(".")) date = LocalDate.parse(part, dateFormat);
+                if (part.contains(":")) time = LocalTime.parse(part, timeFormat);
+            }
+
             storage.updateTaskDeadline(s.getPendingTaskId(), date, time);
             return finish(s, "✅ Задача обновлена.");
         } catch (Exception e) {
-            return reply(buttons.cancel(
-                    "❌ Ошибка. Введите ДД.ММ.ГГГГ или ДД.ММ.ГГГГ ЧЧ:ММ"));
+            return reply(buttons.cancel("❌ Ошибка. Введите дату и/или время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
         }
     }
 
@@ -357,14 +365,13 @@ public class ResponseService {
 
         s.setSelectedDate(date);
 
-        // ИСПРАВЛЕНИЕ ЗДЕСЬ: отдаем один ответ с текстом и кнопками
         if (flow == Flow.SHOW) {
             s.setState(State.MARK_DONE_WAIT_BUTTON);
-            return reply(buttons.markDone(sb.toString()));
+            return reply(buttons.markDone(sb.toString())); // Здесь теперь только кнопка пометки
         }
         if (flow == Flow.MARK_DONE) {
             s.setState(State.MARK_DONE_WAIT_NUMBERS);
-            return reply(buttons.cancel("Выберите номера задач через пробел.")); // Тут просто кнопка отмены
+            return reply(buttons.cancel("Выберите номера задач через пробел."));
         }
 
         boolean delete = flow == Flow.DELETE;
@@ -452,15 +459,9 @@ public class ResponseService {
 
     private Flow flowOf(State state) {
         String name = state.name();
-        if (name.startsWith("SHOW")) {
-            return Flow.SHOW;
-        }
-        if (name.startsWith("DELETE")) {
-            return Flow.DELETE;
-        }
-        if (name.startsWith("MARK")) {
-            return Flow.MARK_DONE;
-        }
+        if (name.startsWith("SHOW")) return Flow.SHOW;
+        if (name.startsWith("DELETE")) return Flow.DELETE;
+        if (name.startsWith("MARK")) return Flow.MARK_DONE;
         return name.startsWith("EDIT") ? Flow.EDIT : null;
     }
 
