@@ -34,6 +34,9 @@ public class ResponseService {
             "❌ Неправильный формат. Введите ЧЧ:ММ";
     private static final String NOT_FOUND_MESSAGE = "❌ Задача не найдена.";
 
+    /**
+     * Какая команда выполняется в текущем диалоге.
+     */
     private enum Flow {
         SHOW, DELETE, EDIT, MARK_DONE
     }
@@ -121,8 +124,9 @@ public class ResponseService {
 
         if (state == State.ADD_TASK_ASK_TIME) {
             if (action == ButtonAction.YES) {
+                // Просим ТОЛЬКО время, так как дата уже известна
                 return ask(s, State.ADD_TASK_WAIT_TIME,
-                        buttons.cancel("⏰ Введите время (ЧЧ:ММ) или дату и время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+                        buttons.cancel("⏰ Введите рекомендуемое время начала (ЧЧ:ММ)"));
             }
             if (action == ButtonAction.NO) {
                 return ask(s, State.ADD_TASK_ASK_DEADLINE,
@@ -219,18 +223,8 @@ public class ResponseService {
 
     private List<BotResponse> handleAddTaskTime(UserSession s, String text) {
         try {
-            String[] parts = text.trim().split("\\s+");
-            // Ищем время (содержит двоеточие)
-            LocalTime time = null;
-            for (String part : parts) {
-                if (part.contains(":")) {
-                    time = LocalTime.parse(part, timeFormat);
-                    break;
-                }
-            }
-            if (time == null) throw new DateTimeParseException("No time", text, 0);
-
-            s.setPendingTime(time);
+            // Строго парсим только время ЧЧ:ММ
+            s.setPendingTime(LocalTime.parse(text.trim(), timeFormat));
             return ask(s, State.ADD_TASK_ASK_DEADLINE,
                     buttons.yesNo("Добавить дедлайн к задаче?"));
         } catch (DateTimeParseException e) {
@@ -367,7 +361,7 @@ public class ResponseService {
 
         if (flow == Flow.SHOW) {
             s.setState(State.MARK_DONE_WAIT_BUTTON);
-            return reply(buttons.markDone(sb.toString())); // Здесь теперь только кнопка пометки
+            return reply(buttons.markDone(sb.toString()));
         }
         if (flow == Flow.MARK_DONE) {
             s.setState(State.MARK_DONE_WAIT_NUMBERS);
