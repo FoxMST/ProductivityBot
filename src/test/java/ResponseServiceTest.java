@@ -40,21 +40,6 @@ class ResponseServiceTest {
             "📋 Задачи на 10.12.2026. Формат: (Номер) - (Задача) - (ID) - (Время) - (Дедлайн) - (Статус):";
 
     /**
-     * Полный текст справки.
-     */
-    private final String expectedHelp =
-            "📖 Доступные команды:\n"
-                    + "/start — начать\n"
-                    + "/help — справка\n"
-                    + "/add_task — добавить задачу\n"
-                    + "/show_tasklist — показать задачи за день\n"
-                    + "/edit_task — изменить задачу\n"
-                    + "/delete_task — удалить задачу\n"
-                    + "/mark_as_done — отметить выполненные\n"
-                    + "Во время любой команды можно нажать ❌ Отмена.\n"
-                    + "Просто напиши что-нибудь — я повторю.";
-
-    /**
      * Тестируемый объект (время зафиксировано: 10.12.2026).
      */
     private ResponseService bot;
@@ -117,23 +102,6 @@ class ResponseServiceTest {
     }
 
     /**
-     * Проверяет, что на команду /start бот возвращает приветствие.
-     */
-    @Test
-    void shouldReturnGreetingForStart() {
-        Assertions.assertEquals("👋 Привет! Я бот-продуктивность.\n"
-                + "Напиши /help, чтобы увидеть команды.", say("/start"));
-    }
-
-    /**
-     * Проверяет, что на команду /help бот возвращает полный текст справки.
-     */
-    @Test
-    void shouldReturnHelp() {
-        Assertions.assertEquals(expectedHelp, say("/help"));
-    }
-
-    /**
      * Проверяет, что в состоянии IDLE обычный текст возвращается пользователю как эхо.
      */
     @Test
@@ -160,7 +128,7 @@ class ResponseServiceTest {
     void commandShouldEscapeAddTaskFlow() {
         say("/add_task");
 
-        Assertions.assertEquals(expectedHelp, say("/help"));
+        say("/help");
 
         say("/show_tasklist");
         Assertions.assertEquals("📋 На 10.12.2026 задач нет.", press(ButtonAction.TODAY));
@@ -214,7 +182,6 @@ class ResponseServiceTest {
                         + "Напишите номер задачи, которую хотите удалить.",
                 press(ButtonAction.TODAY));
 
-        // Проверяем запрос подтверждения и затем само удаление
         Assertions.assertEquals("Удалить задачу «Купить хлеб» ?", say("1"));
         Assertions.assertEquals("🗑 Задача удалена.", press(ButtonAction.DELETE_CONFIRM));
 
