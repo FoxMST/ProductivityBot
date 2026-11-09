@@ -8,31 +8,109 @@ import java.util.*;
 
 /**
  * Формирует ответы на команды и произвольные сообщения.
+ * Реализует логику конечного автомата (FSM) для ведения диалогов.
  */
 public class ResponseService {
 
+    /**
+     * Приветственное сообщение.
+     */
     private static final String START_MESSAGE = "👋 Привет! Я бот-продуктивность.\nНапиши /help, чтобы увидеть команды.";
+
+    /**
+     * Текст справки со списком всех команд.
+     */
     private static final String HELP_MESSAGE = "📖 Доступные команды:\n/start — начать\n/help — справка\n/add_task — добавить задачу\n/show_tasklist — показать задачи за день\n/edit_task — изменить задачу\n/delete_task — удалить задачу\n/mark_as_done — отметить выполненные\nВо время любой команды можно нажать ❌ Отмена.\nПросто напиши что-нибудь — я повторю.";
+
+    /**
+     * Сообщение при отмене текущего действия.
+     */
     private static final String CANCEL_MESSAGE = "Черновик задачи удален. Введите любую команду.";
+
+    /**
+     * Сообщение, если нажата устаревшая кнопка.
+     */
     private static final String STALE_MESSAGE = "Это действие уже недоступно. Введите любую команду.";
+
+    /**
+     * Сообщение об ошибке формата даты.
+     */
     private static final String BAD_DATE_MESSAGE = "❌ Неправильный формат. Введите ДД.ММ.ГГГГ";
+
+    /**
+     * Сообщение об ошибке формата времени.
+     */
     private static final String BAD_TIME_MESSAGE = "❌ Неправильный формат. Введите ЧЧ:ММ";
+
+    /**
+     * Сообщение, если задача не найдена.
+     */
     private static final String NOT_FOUND_MESSAGE = "❌ Задача не найдена.";
 
-    private enum Flow {SHOW, DELETE, EDIT, MARK_DONE}
+    /**
+     * Контекст выполняемой команды.
+     */
+    private enum Flow {
+        /**
+         * Просмотр списка задач.
+         */
+        SHOW,
+        /**
+         * Удаление задачи.
+         */
+        DELETE,
+        /**
+         * Редактирование задачи.
+         */
+        EDIT,
+        /**
+         * Пометка задач выполненными.
+         */
+        MARK_DONE
+    }
 
+    /**
+     * Хранилище задач.
+     */
     private final TaskStorage storage;
+    /**
+     * Часы для получения текущего времени (позволяет тестировать).
+     */
     private final Clock clock;
+    /**
+     * Форматтер для даты.
+     */
     private final DateTimeFormatter dateFormat;
+    /**
+     * Форматтер для времени.
+     */
     private final DateTimeFormatter timeFormat;
+    /**
+     * Множество доступных текстовых команд.
+     */
     private final Set<String> commands;
+    /**
+     * Генератор кнопок.
+     */
     private final Button buttons;
+    /**
+     * Сессии пользователей по их chatId.
+     */
     private final Map<Long, UserSession> sessions;
 
+    /**
+     * Создает сервис с системными часами и пустым хранилищем.
+     */
     public ResponseService() {
         this(Clock.systemDefaultZone(), new TaskStorage());
     }
 
+    /**
+     * Создает сервис с заданными часами и хранилищем.
+     *
+     * @param clock   часы
+     * @param storage хранилище задач
+     */
     public ResponseService(Clock clock, TaskStorage storage) {
         this.clock = clock;
         this.storage = storage;
@@ -43,6 +121,13 @@ public class ResponseService {
         this.sessions = new HashMap<>();
     }
 
+    /**
+     * Обрабатывает текстовое сообщение от пользователя.
+     *
+     * @param chatId ID чата пользователя
+     * @param text   текст сообщения
+     * @return список ответов бота
+     */
     public synchronized List<BotResponse> handleMessage(long chatId, String text) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
@@ -90,6 +175,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Обрабатывает нажатие inline-кнопки.
+     *
+     * @param chatId   ID чата пользователя
+     * @param actionId идентификатор нажатой кнопки
+     * @return список ответов бота
+     */
     public synchronized List<BotResponse> handleAction(long chatId, String actionId) {
         UserSession s = sessions.computeIfAbsent(chatId, id -> new UserSession());
         State state = s.getState();
@@ -143,6 +235,13 @@ public class ResponseService {
         return reply(new BotResponse(STALE_MESSAGE));
     }
 
+    /**
+     * Запускает выполнение команды.
+     *
+     * @param command команда
+     * @param s       сессия пользователя
+     * @return ответы бота
+     */
     private List<BotResponse> runCommand(String command, UserSession s) {
         reset(s);
         switch (command) {
@@ -163,6 +262,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Обрабатывает ввод даты при добавлении задачи.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> handleAddTaskDate(UserSession s, String text) {
         try {
             s.setSelectedDate(LocalDate.parse(text.trim(), dateFormat));
@@ -172,6 +278,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Обрабатывает ввод времени начала.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> handleAddTaskTime(UserSession s, String text) {
         try {
             s.setPendingTime(LocalTime.parse(text.trim(), timeFormat));
@@ -181,6 +294,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Обрабатывает ввод дедлайна.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> handleAddTaskDeadline(UserSession s, String text) {
         try {
             String[] parts = text.trim().split("\\s+");
@@ -200,11 +320,24 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Сохраняет задачу из черновика.
+     *
+     * @param s сессия
+     * @return ответы бота
+     */
     private List<BotResponse> createTask(UserSession s) {
         storage.addTask(s.getPendingText(), s.getSelectedDate(), s.getPendingTime(), s.getPendingDeadlineDate(), s.getPendingDeadlineTime());
         return finish(s, "✅ Задача добавлена.");
     }
 
+    /**
+     * Обрабатывает редактирование даты/времени.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> handleEditDateTime(UserSession s, String text) {
         try {
             Task task = storage.getTaskById(s.getPendingTaskId());
@@ -232,6 +365,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Обрабатывает редактирование дедлайна.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> handleEditDeadline(UserSession s, String text) {
         try {
             Task task = storage.getTaskById(s.getPendingTaskId());
@@ -259,6 +399,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Помечает задачи выполненными по их номерам в списке.
+     *
+     * @param s    сессия
+     * @param text номера задач через пробел
+     * @return ответы бота
+     */
     private List<BotResponse> handleMarkDoneNumbers(UserSession s, String text) {
         List<Task> allTasks = storage.getTasksByDate(s.getSelectedDate());
         List<Task> displayTasks = new ArrayList<>();
@@ -284,6 +431,14 @@ public class ResponseService {
         return finish(s, "✅ Задачи помечены как выполненные (" + count + " шт.)");
     }
 
+    /**
+     * Выводит список задач на указанный день.
+     *
+     * @param s    сессия
+     * @param date дата
+     * @param flow контекст (просмотр, удаление и т.д.)
+     * @return ответы бота
+     */
     private List<BotResponse> showDay(UserSession s, LocalDate date, Flow flow) {
         List<Task> tasks = storage.getTasksByDate(date);
         String day = dateFormat.format(date);
@@ -322,6 +477,13 @@ public class ResponseService {
         return reply(new BotResponse(sb.toString()), buttons.cancel("Напишите номер задачи, которую хотите " + (delete ? "удалить." : "изменить.")));
     }
 
+    /**
+     * Обрабатывает ручной ввод даты для списка.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> onDateInput(UserSession s, String text) {
         try {
             return showDay(s, LocalDate.parse(text.trim(), dateFormat), flowOf(s.getState()));
@@ -330,6 +492,13 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Обрабатывает ввод номера задачи из списка.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> onNumberInput(UserSession s, String text) {
         List<Task> tasks = storage.getTasksByDate(s.getSelectedDate());
         Integer number = parseInt(text);
@@ -339,6 +508,13 @@ public class ResponseService {
         return chooseTask(s, tasks.get(number - 1));
     }
 
+    /**
+     * Обрабатывает ввод ID задачи.
+     *
+     * @param s    сессия
+     * @param text введенный текст
+     * @return ответы бота
+     */
     private List<BotResponse> onIdInput(UserSession s, String text) {
         Integer id = parseInt(text);
         Task task = id == null ? null : storage.getTaskById(id);
@@ -348,6 +524,13 @@ public class ResponseService {
         return chooseTask(s, task);
     }
 
+    /**
+     * Переходит к работе с выбранной задачей.
+     *
+     * @param s    сессия
+     * @param task задача
+     * @return ответы бота
+     */
     private List<BotResponse> chooseTask(UserSession s, Task task) {
         s.setPendingTaskId(task.getId());
         if (flowOf(s.getState()) == Flow.EDIT)
@@ -355,6 +538,13 @@ public class ResponseService {
         return ask(s, State.DELETE_TASK_CONFIRM, buttons.deleteConfirm("Удалить задачу «" + task.getText() + "» ?"));
     }
 
+    /**
+     * Удаляет задачу.
+     *
+     * @param s  сессия
+     * @param id ID задачи
+     * @return ответы бота
+     */
     private List<BotResponse> deleteTask(UserSession s, int id) {
         try {
             storage.deleteTask(id);
@@ -364,16 +554,36 @@ public class ResponseService {
         }
     }
 
+    /**
+     * Меняет состояние сессии и возвращает вопрос.
+     *
+     * @param s        сессия
+     * @param next     следующее состояние
+     * @param question вопрос
+     * @return ответы бота
+     */
     private List<BotResponse> ask(UserSession s, State next, BotResponse question) {
         s.setState(next);
         return reply(question);
     }
 
+    /**
+     * Завершает сценарий и сбрасывает состояние.
+     *
+     * @param s    сессия
+     * @param text текст ответа
+     * @return ответы бота
+     */
     private List<BotResponse> finish(UserSession s, String text) {
         reset(s);
         return reply(new BotResponse(text));
     }
 
+    /**
+     * Сбрасывает сессию в начальное состояние.
+     *
+     * @param s сессия
+     */
     private void reset(UserSession s) {
         s.setState(State.IDLE);
         s.setSelectedDate(null);
@@ -384,14 +594,32 @@ public class ResponseService {
         s.setPendingDeadlineTime(null);
     }
 
+    /**
+     * Оборачивает ответы в список.
+     *
+     * @param responses ответы
+     * @return список ответов
+     */
     private List<BotResponse> reply(BotResponse... responses) {
         return Arrays.asList(responses);
     }
 
+    /**
+     * Проверяет, ожидается ли выбор дня.
+     *
+     * @param state состояние
+     * @return true, если ожидается выбор дня
+     */
     private boolean isDayChoiceState(State state) {
         return state == State.SHOW_TASKLIST_WAIT_DATE || state == State.DELETE_TASK_WAIT_ID_OR_DATE || state == State.EDIT_TASK_WAIT_ID_OR_DATE;
     }
 
+    /**
+     * Определяет контекст по состоянию.
+     *
+     * @param state состояние
+     * @return контекст
+     */
     private Flow flowOf(State state) {
         String name = state.name();
         if (name.startsWith("SHOW")) return Flow.SHOW;
@@ -400,12 +628,24 @@ public class ResponseService {
         return name.startsWith("EDIT") ? Flow.EDIT : null;
     }
 
+    /**
+     * Извлекает команду из строки (убирает @username).
+     *
+     * @param text текст
+     * @return команда
+     */
     private String extractCommand(String text) {
         String first = text.trim().split("\\s+")[0];
         int at = first.indexOf('@');
         return at > 0 ? first.substring(0, at) : first;
     }
 
+    /**
+     * Парсит строку в число.
+     *
+     * @param text текст
+     * @return число или null
+     */
     private Integer parseInt(String text) {
         try {
             return Integer.parseInt(text.trim());
