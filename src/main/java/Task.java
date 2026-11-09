@@ -49,107 +49,83 @@ public class Task {
     }
 
     /**
-     * Возвращает идентификатор задачи.
-     *
-     * @return id
+     * @return идентификатор
      */
     public int getId() {
         return id;
     }
 
     /**
-     * Возвращает текст задачи.
-     *
-     * @return текст
+     * @return текст задачи
      */
     public String getText() {
         return text;
     }
 
     /**
-     * Устанавливает новый текст задачи.
-     *
-     * @param text новый текст
+     * @param text новый текст задачи
      */
     public void setText(String text) {
         this.text = text;
     }
 
     /**
-     * Возвращает дату задачи.
-     *
-     * @return дата
+     * @return дата задачи
      */
     public LocalDate getDate() {
         return date;
     }
 
     /**
-     * Устанавливает новую дату задачи.
-     *
-     * @param date новая дата
+     * @param date новая дата задачи
      */
     public void setDate(LocalDate date) {
         this.date = date;
     }
 
     /**
-     * Возвращает рекомендуемое время начала.
-     *
-     * @return время или null
+     * @return рекомендуемое время начала
      */
     public LocalTime getStartTime() {
         return startTime;
     }
 
     /**
-     * Устанавливает рекомендуемое время начала.
-     *
-     * @param startTime время или null
+     * @param startTime рекомендуемое время начала
      */
     public void setStartTime(LocalTime startTime) {
         this.startTime = startTime;
     }
 
     /**
-     * Возвращает дату дедлайна.
-     *
-     * @return дата или null
+     * @return дата дедлайна
      */
     public LocalDate getDeadlineDate() {
         return deadlineDate;
     }
 
     /**
-     * Устанавливает дату дедлайна.
-     *
-     * @param deadlineDate дата или null
+     * @param deadlineDate дата дедлайна
      */
     public void setDeadlineDate(LocalDate deadlineDate) {
         this.deadlineDate = deadlineDate;
     }
 
     /**
-     * Возвращает время дедлайна.
-     *
-     * @return время или null
+     * @return время дедлайна
      */
     public LocalTime getDeadlineTime() {
         return deadlineTime;
     }
 
     /**
-     * Устанавливает время дедлайна.
-     *
-     * @param deadlineTime время или null
+     * @param deadlineTime время дедлайна
      */
     public void setDeadlineTime(LocalTime deadlineTime) {
         this.deadlineTime = deadlineTime;
     }
 
     /**
-     * Возвращает статус выполнения.
-     *
      * @return true, если задача выполнена
      */
     public boolean isDone() {
@@ -157,9 +133,7 @@ public class Task {
     }
 
     /**
-     * Устанавливает статус выполнения.
-     *
-     * @param done новый статус
+     * @param done новый статус выполнения
      */
     public void setDone(boolean done) {
         this.done = done;

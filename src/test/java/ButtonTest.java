@@ -3,9 +3,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Тесты для набора готовых ответов {@link Button}.
- * Проверяют обратное преобразование идентификатора нажатой кнопки
- * в соответствующее действие через {@link Button#fromId(String)}.
+ * Тесты для набора готовых ответов Button.
+ * Проверяют обратное преобразование идентификатора нажатой кнопки.
  */
 public class ButtonTest {
 
@@ -23,8 +22,7 @@ public class ButtonTest {
     }
 
     /**
-     * Проверяет, что известные идентификаторы корректно преобразуются
-     * в соответствующие действия.
+     * Проверяет, что известные ID корректно преобразуются в действия.
      */
     @Test
     public void fromIdShouldRecognizeKnownActions() {
@@ -37,8 +35,7 @@ public class ButtonTest {
     }
 
     /**
-     * Проверяет, что {@code null} на входе возвращает {@code null},
-     * а не бросает исключение.
+     * Проверяет, что null на входе возвращает null.
      */
     @Test
     public void fromIdShouldReturnNullForNullInput() {
@@ -46,8 +43,7 @@ public class ButtonTest {
     }
 
     /**
-     * Проверяет, что неизвестный идентификатор возвращает {@code null},
-     * а не бросает исключение.
+     * Проверяет, что неизвестный ID возвращает null.
      */
     @Test
     public void fromIdShouldReturnNullForUnknownId() {
@@ -57,8 +53,7 @@ public class ButtonTest {
     }
 
     /**
-     * Проверяет, что преобразование чувствительно к регистру:
-     * строчные идентификаторы не распознаются.
+     * Проверяет, что преобразование чувствительно к регистру.
      */
     @Test
     public void fromIdShouldBeCaseSensitive() {

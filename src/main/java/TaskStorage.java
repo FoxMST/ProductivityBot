@@ -9,17 +9,8 @@ import java.util.Map;
  * Хранилище задач в оперативной памяти.
  */
 public class TaskStorage {
-    /**
-     * Задачи по идентификатору.
-     */
     private final Map<Integer, Task> tasksById;
-    /**
-     * Задачи по дате.
-     */
     private final Map<LocalDate, List<Task>> tasksByDate;
-    /**
-     * Следующий свободный идентификатор.
-     */
     private int nextId;
 
     /**
@@ -33,7 +24,6 @@ public class TaskStorage {
 
     /**
      * Добавляет новую задачу (без времени и дедлайна).
-     * Делегирует в полную версию.
      *
      * @param text текст задачи
      * @param date дата задачи
@@ -62,14 +52,7 @@ public class TaskStorage {
         task.setDeadlineTime(deadlineTime);
 
         tasksById.put(id, task);
-
-        List<Task> list = tasksByDate.get(date);
-        if (list == null) {
-            list = new ArrayList<>();
-            tasksByDate.put(date, list);
-        }
-        list.add(task);
-
+        tasksByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(task);
         return id;
     }
 
@@ -81,10 +64,7 @@ public class TaskStorage {
      */
     public List<Task> getTasksByDate(LocalDate date) {
         List<Task> tasks = tasksByDate.get(date);
-        if (tasks == null) {
-            return new ArrayList<>();
-        }
-        return new ArrayList<>(tasks);
+        return tasks == null ? new ArrayList<>() : new ArrayList<>(tasks);
     }
 
     /**
@@ -101,12 +81,12 @@ public class TaskStorage {
      * Удаляет задачу по идентификатору.
      *
      * @param id идентификатор
-     * @return true, если задача была удалена
+     * @throws IllegalArgumentException если задача с таким ID не найдена
      */
-    public boolean deleteTask(int id) {
+    public void deleteTask(int id) {
         Task task = tasksById.remove(id);
         if (task == null) {
-            return false;
+            throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
         List<Task> tasks = tasksByDate.get(task.getDate());
         if (tasks != null) {
@@ -115,7 +95,6 @@ public class TaskStorage {
                 tasksByDate.remove(task.getDate());
             }
         }
-        return true;
     }
 
     /**
@@ -123,15 +102,14 @@ public class TaskStorage {
      *
      * @param id      идентификатор
      * @param newText новый текст
-     * @return true, если задача найдена и обновлена
+     * @throws IllegalArgumentException если задача с таким ID не найдена
      */
-    public boolean updateTaskText(int id, String newText) {
+    public void updateTaskText(int id, String newText) {
         Task task = tasksById.get(id);
         if (task == null) {
-            return false;
+            throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
         task.setText(newText);
-        return true;
     }
 
     /**
@@ -140,12 +118,12 @@ public class TaskStorage {
      * @param id   идентификатор
      * @param date новая дата (может быть null)
      * @param time новое время (может быть null)
-     * @return true, если задача найдена и обновлена
+     * @throws IllegalArgumentException если задача с таким ID не найдена
      */
-    public boolean updateTaskDateTime(int id, LocalDate date, LocalTime time) {
+    public void updateTaskDateTime(int id, LocalDate date, LocalTime time) {
         Task task = tasksById.get(id);
         if (task == null) {
-            return false;
+            throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
         if (date != null && !task.getDate().equals(date)) {
             List<Task> oldList = tasksByDate.get(task.getDate());
@@ -161,7 +139,6 @@ public class TaskStorage {
         if (time != null) {
             task.setStartTime(time);
         }
-        return true;
     }
 
     /**
@@ -170,31 +147,28 @@ public class TaskStorage {
      * @param id   идентификатор
      * @param date новая дата дедлайна (может быть null)
      * @param time новое время дедлайна (может быть null)
-     * @return true, если задача найдена и обновлена
+     * @throws IllegalArgumentException если задача с таким ID не найдена
      */
-    public boolean updateTaskDeadline(int id, LocalDate date, LocalTime time) {
+    public void updateTaskDeadline(int id, LocalDate date, LocalTime time) {
         Task task = tasksById.get(id);
         if (task == null) {
-            return false;
+            throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
-        if (date != null) {
-            task.setDeadlineDate(date);
-        }
-        if (time != null) {
-            task.setDeadlineTime(time);
-        }
-        return true;
+        if (date != null) task.setDeadlineDate(date);
+        if (time != null) task.setDeadlineTime(time);
     }
 
     /**
      * Помечает задачу выполненной.
      *
      * @param id идентификатор
+     * @throws IllegalArgumentException если задача с таким ID не найдена
      */
     public void markTaskDone(int id) {
         Task task = tasksById.get(id);
-        if (task != null) {
-            task.setDone(true);
+        if (task == null) {
+            throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
+        task.setDone(true);
     }
 }

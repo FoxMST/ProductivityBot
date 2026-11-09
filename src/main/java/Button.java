@@ -6,47 +6,66 @@ import java.util.List;
  */
 public class Button {
 
+    /**
+     * Создает экземпляр набора ответов.
+     */
     public Button() {
     }
 
+    /**
+     * @param text текст сообщения @return ответ с кнопкой отмены
+     */
     public BotResponse cancel(String text) {
         return new BotResponse(text, rows(row(button(ButtonAction.CANCEL))));
     }
 
+    /**
+     * @param text текст сообщения @return ответ с выбором дня
+     */
     public BotResponse dayChoice(String text) {
-        return new BotResponse(text, rows(row(button(ButtonAction.TODAY), button(ButtonAction.TOMORROW)),
+        return new BotResponse(text, rows(
+                row(button(ButtonAction.TODAY), button(ButtonAction.TOMORROW)),
                 row(button(ButtonAction.CUSTOM_DATE), button(ButtonAction.CANCEL))));
     }
 
+    /**
+     * @param text текст сообщения @return ответ с подтверждением удаления
+     */
     public BotResponse deleteConfirm(String text) {
         return new BotResponse(text, rows(
                 row(button(ButtonAction.DELETE_CONFIRM), button(ButtonAction.CANCEL))));
     }
 
+    /**
+     * @param text текст сообщения @return ответ с выбором поля для редактирования
+     */
     public BotResponse editField(String text) {
         return new BotResponse(text, rows(
                 row(button(ButtonAction.EDIT_TEXT), button(ButtonAction.EDIT_DATETIME)),
                 row(button(ButtonAction.EDIT_DEADLINE), button(ButtonAction.CANCEL))));
     }
 
+    /**
+     * @param text текст сообщения @return ответ с кнопками Да/Нет
+     */
     public BotResponse yesNo(String text) {
         return new BotResponse(text, rows(
                 row(button(ButtonAction.YES), button(ButtonAction.NO), button(ButtonAction.CANCEL))));
     }
 
     /**
-     * Сообщение с кнопкой «Пометить выполненные задачи».
-     * Убрана кнопка Отмена, так как это просто вывод списка.
+     * @param text текст сообщения @return ответ с кнопкой пометки выполнения
      */
     public BotResponse markDone(String text) {
         return new BotResponse(text, rows(
                 row(button(ButtonAction.MARK_DONE))));
     }
 
+    /**
+     * @param id идентификатор из нажатой кнопки @return действие или null
+     */
     public ButtonAction fromId(String id) {
-        if (id == null) {
-            return null;
-        }
+        if (id == null) return null;
         try {
             return ButtonAction.valueOf(id);
         } catch (IllegalArgumentException e) {
