@@ -1,9 +1,5 @@
 /**
  * Перечень всех возможных действий кнопок в боте.
- * Каждое действие имеет две характеристики:
- *  {@link #label()} — надпись, которую видит пользователь;
- *  {@link #id()} — технический идентификатор, который Telegram
- *  присылает обратно в {@code callbackData} при нажатии.
  */
 public enum ButtonAction {
     CANCEL("❌ Отмена"),
@@ -18,9 +14,6 @@ public enum ButtonAction {
     NO("Нет"),
     MARK_DONE("🖊️ Пометить выполненные задачи");
 
-    /**
-     * Надпись на кнопке.
-     */
     private final String label;
 
     /**
@@ -31,14 +24,14 @@ public enum ButtonAction {
     }
 
     /**
-     * @return надпись, которую видит пользователь
+     * @return надпись на кнопке
      */
     public String label() {
         return label;
     }
 
     /**
-     * @return идентификатор для нажатия
+     * @return технический идентификатор
      */
     public String id() {
         return name();
