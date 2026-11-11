@@ -9,8 +9,19 @@ import java.util.Map;
  * Хранилище задач в оперативной памяти.
  */
 public class TaskStorage {
+    /**
+     * Все задачи по идентификатору: ключ — идентификатор задачи (id),
+     * значение — сама задача.
+     */
     private final Map<Integer, Task> tasksById;
+    /**
+     * Задачи по датам: ключ — дата задачи, значение — список задач этого дня
+     * в порядке добавления. Дни без задач в карте не хранятся.
+     */
     private final Map<LocalDate, List<Task>> tasksByDate;
+    /**
+     * Идентификатор, который получит следующая добавленная задача (начиная с 1).
+     */
     private int nextId;
 
     /**
@@ -30,6 +41,7 @@ public class TaskStorage {
      * @return идентификатор добавленной задачи
      */
     public int addTask(String text, LocalDate date) {
+
         return addTask(text, date, null, null, null);
     }
 
@@ -64,7 +76,9 @@ public class TaskStorage {
      */
     public List<Task> getTasksByDate(LocalDate date) {
         List<Task> tasks = tasksByDate.get(date);
-        return tasks == null ? new ArrayList<>() : new ArrayList<>(tasks);
+        return tasks == null
+                ? new ArrayList<>()
+                : new ArrayList<>(tasks);
     }
 
     /**
@@ -74,6 +88,7 @@ public class TaskStorage {
      * @return задача или null, если не найдена
      */
     public Task getTaskById(int id) {
+
         return tasksById.get(id);
     }
 
@@ -154,8 +169,10 @@ public class TaskStorage {
         if (task == null) {
             throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
-        if (date != null) task.setDeadlineDate(date);
-        if (time != null) task.setDeadlineTime(time);
+        if (date != null)
+            task.setDeadlineDate(date);
+        if (time != null)
+            task.setDeadlineTime(time);
     }
 
     /**
