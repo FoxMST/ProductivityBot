@@ -15,12 +15,23 @@ public class ResponseService {
     /**
      * Приветственное сообщение.
      */
-    private static final String START_MESSAGE = "👋 Привет! Я бот-продуктивность.\nНапиши /help, чтобы увидеть команды.";
+    private static final String START_MESSAGE = "👋 Привет! Я бот-продуктивность.\n" +
+            "Напиши /help, чтобы увидеть команды.";
 
     /**
      * Текст справки со списком всех команд.
      */
-    private static final String HELP_MESSAGE = "📖 Доступные команды:\n/start — начать\n/help — справка\n/add_task — добавить задачу\n/show_tasklist — показать задачи за день\n/edit_task — изменить задачу\n/delete_task — удалить задачу\n/mark_as_done — отметить выполненные\nВо время любой команды можно нажать ❌ Отмена.\nПросто напиши что-нибудь — я повторю.";
+    private static final String HELP_MESSAGE = """
+            📖 Доступные команды:
+            /start — начать
+            /help — справка
+            /add_task — добавить задачу
+            /show_tasklist — показать задачи за день
+            /edit_task — изменить задачу
+            /delete_task — удалить задачу
+            /mark_as_done — отметить выполненные
+            Во время любой команды можно нажать ❌ Отмена.
+            Просто напиши что-нибудь — я повторю.""";
 
     /**
      * Сообщение при отмене текущего действия.
@@ -133,7 +144,8 @@ public class ResponseService {
         State state = s.getState();
         String command = extractCommand(text);
 
-        if (commands.contains(command)) return runCommand(command, s);
+        if (commands.contains(command))
+            return runCommand(command, s);
 
         switch (state) {
             case ADD_TASK_WAIT_TEXT:
@@ -187,32 +199,56 @@ public class ResponseService {
         State state = s.getState();
         ButtonAction action = buttons.fromId(actionId);
 
-        if (action == ButtonAction.CANCEL && state != State.IDLE) return finish(s, CANCEL_MESSAGE);
+        if (action == ButtonAction.CANCEL && state != State.IDLE)
+            return finish(s, CANCEL_MESSAGE);
 
         if (state == State.ADD_TASK_ASK_TIME) {
             if (action == ButtonAction.YES)
-                return ask(s, State.ADD_TASK_WAIT_TIME, buttons.cancel("⏰ Введите рекомендуемое время начала (ЧЧ:ММ)"));
+                return ask(
+                        s,
+                        State.ADD_TASK_WAIT_TIME,
+                        buttons.cancel("⏰ Введите рекомендуемое время начала (ЧЧ:ММ)"));
             if (action == ButtonAction.NO)
-                return ask(s, State.ADD_TASK_ASK_DEADLINE, buttons.yesNo("Добавить дедлайн к задаче?"));
+                return ask(
+                        s,
+                        State.ADD_TASK_ASK_DEADLINE,
+                        buttons.yesNo("Добавить дедлайн к задаче?"));
         }
 
         if (state == State.ADD_TASK_ASK_DEADLINE) {
             if (action == ButtonAction.YES)
-                return ask(s, State.ADD_TASK_WAIT_DEADLINE, buttons.cancel("⏳ Введите дедлайн: ДД.ММ.ГГГГ ЧЧ:ММ, или только ДД.ММ.ГГГГ, или только ЧЧ:ММ"));
-            if (action == ButtonAction.NO) return createTask(s);
+                return ask(
+                        s,
+                        State.ADD_TASK_WAIT_DEADLINE,
+                        buttons.cancel("⏳ Введите дедлайн: ДД.ММ.ГГГГ ЧЧ:ММ, или только ДД.ММ.ГГГГ, или только ЧЧ:ММ"));
+            if (action == ButtonAction.NO)
+                return createTask(s);
         }
 
         if (state == State.EDIT_TASK_WAIT_FIELD && action != null) {
             if (action == ButtonAction.EDIT_TEXT)
-                return ask(s, State.EDIT_TASK_WAIT_NEW_TEXT, buttons.cancel("Введите новый текст"));
+                return ask(
+                        s,
+                        State.EDIT_TASK_WAIT_NEW_TEXT,
+                        buttons.cancel("Введите новый текст"));
             if (action == ButtonAction.EDIT_DATETIME)
-                return ask(s, State.EDIT_TASK_WAIT_NEW_DATETIME, buttons.cancel("Введите новую дату и/или время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
+                return ask(
+                        s,
+                        State.EDIT_TASK_WAIT_NEW_DATETIME,
+                        buttons.cancel("Введите новую дату и/или время (ДД.ММ.ГГГГ ЧЧ:ММ)"));
             if (action == ButtonAction.EDIT_DEADLINE)
-                return ask(s, State.EDIT_TASK_WAIT_NEW_DEADLINE, buttons.cancel("Введите новый дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ) или только его часть"));
+                return ask(
+                        s,
+                        State.EDIT_TASK_WAIT_NEW_DEADLINE,
+                        buttons.cancel("Введите новый дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ) или только его часть"));
         }
 
         if (action == ButtonAction.MARK_DONE && state == State.MARK_DONE_WAIT_BUTTON) {
-            return ask(s, State.MARK_DONE_WAIT_NUMBERS, buttons.cancel("Выберите номер/номера задач в списке, которые необходимо пометить выполненными. Если задач несколько введите номера через пробел."));
+            return ask(
+                    s,
+                    State.MARK_DONE_WAIT_NUMBERS,
+                    buttons.cancel("Выберите номер/номера задач в списке, которые необходимо пометить выполненными."+
+                            " Если задач несколько введите номера через пробел."));
         }
 
         if (state == State.DELETE_TASK_CONFIRM && action == ButtonAction.DELETE_CONFIRM)
@@ -226,7 +262,9 @@ public class ResponseService {
                 case TOMORROW:
                     return showDay(s, LocalDate.now(clock).plusDays(1), flow);
                 case CUSTOM_DATE:
-                    State next = flow == Flow.SHOW ? State.SHOW_TASKLIST_WAIT_CUSTOM_DATE : flow == Flow.DELETE ? State.DELETE_TASK_WAIT_CUSTOM_DATE : State.EDIT_TASK_WAIT_CUSTOM_DATE;
+                    State next = flow == Flow.SHOW
+                            ? State.SHOW_TASKLIST_WAIT_CUSTOM_DATE : flow == Flow.DELETE
+                            ? State.DELETE_TASK_WAIT_CUSTOM_DATE : State.EDIT_TASK_WAIT_CUSTOM_DATE;
                     return ask(s, next, buttons.cancel("Введите дату (ДД.ММ.ГГГГ)"));
                 default:
                     break;
@@ -250,15 +288,27 @@ public class ResponseService {
             case "/help":
                 return reply(new BotResponse(HELP_MESSAGE));
             case "/add_task":
-                return ask(s, State.ADD_TASK_WAIT_TEXT, buttons.cancel("📝 Введите текст задачи"));
+                return ask(
+                        s,
+                        State.ADD_TASK_WAIT_TEXT,
+                        buttons.cancel("📝 Введите текст задачи"));
             case "/show_tasklist":
-                return ask(s, State.SHOW_TASKLIST_WAIT_DATE, buttons.dayChoice("За какой день показать задачи?"));
+                return ask(
+                        s,
+                        State.SHOW_TASKLIST_WAIT_DATE,
+                        buttons.dayChoice("За какой день показать задачи?"));
             case "/delete_task":
-                return ask(s, State.DELETE_TASK_WAIT_ID_OR_DATE, buttons.dayChoice("Отправьте ID задачи или выберите день для удаления:"));
+                return ask(
+                        s,
+                        State.DELETE_TASK_WAIT_ID_OR_DATE,
+                        buttons.dayChoice("Отправьте ID задачи или выберите день для удаления:"));
             case "/mark_as_done":
                 return showDay(s, LocalDate.now(clock), Flow.MARK_DONE);
             default:
-                return ask(s, State.EDIT_TASK_WAIT_ID_OR_DATE, buttons.dayChoice("Отправьте ID задачи или выберите день для редактирования:"));
+                return ask(
+                        s,
+                        State.EDIT_TASK_WAIT_ID_OR_DATE,
+                        buttons.dayChoice("Отправьте ID задачи или выберите день для редактирования:"));
         }
     }
 
@@ -307,16 +357,21 @@ public class ResponseService {
             LocalDate dDate = null;
             LocalTime dTime = null;
             for (String part : parts) {
-                if (part.contains(".")) dDate = LocalDate.parse(part, dateFormat);
-                else if (part.contains(":")) dTime = LocalTime.parse(part, timeFormat);
+                if (part.contains("."))
+                    dDate = LocalDate.parse(part, dateFormat);
+                else if (part.contains(":"))
+                    dTime = LocalTime.parse(part, timeFormat);
             }
-            if (dDate == null && dTime != null) dDate = s.getSelectedDate();
-            if (dDate == null && dTime == null) throw new Exception("Empty input");
+            if (dDate == null && dTime != null)
+                dDate = s.getSelectedDate();
+            if (dDate == null && dTime == null)
+                throw new Exception("Empty input");
             s.setPendingDeadlineDate(dDate);
             s.setPendingDeadlineTime(dTime);
             return createTask(s);
         } catch (Exception e) {
-            return reply(buttons.cancel("❌ Ошибка. Введите ДД.ММ.ГГГГ ЧЧ:ММ, или только ДД.ММ.ГГГГ, или только ЧЧ:ММ"));
+            return reply(buttons.cancel("❌ Ошибка." +
+                    " Введите ДД.ММ.ГГГГ ЧЧ:ММ, или только ДД.ММ.ГГГГ, или только ЧЧ:ММ"));
         }
     }
 
@@ -327,7 +382,12 @@ public class ResponseService {
      * @return ответы бота
      */
     private List<BotResponse> createTask(UserSession s) {
-        storage.addTask(s.getPendingText(), s.getSelectedDate(), s.getPendingTime(), s.getPendingDeadlineDate(), s.getPendingDeadlineTime());
+        storage.addTask(
+                s.getPendingText(),
+                s.getSelectedDate(),
+                s.getPendingTime(),
+                s.getPendingDeadlineDate(),
+                s.getPendingDeadlineTime());
         return finish(s, "✅ Задача добавлена.");
     }
 
@@ -421,7 +481,8 @@ public class ResponseService {
                     try {
                         storage.markTaskDone(displayTasks.get(num - 1).getId());
                         count++;
-                    } catch (IllegalArgumentException ignored) {
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
                     }
                 }
             } catch (NumberFormatException ignored) {
@@ -459,10 +520,12 @@ public class ResponseService {
         for (int i = 0; i < displayTasks.size(); i++) {
             Task t = displayTasks.get(i);
             sb.append("\n").append(i + 1).append(". ").append(t.getText()).append(" - ").append(t.getId()).append(" - ").append(dateFormat.format(t.getDate()));
-            if (t.getStartTime() != null) sb.append(" ").append(t.getStartTime());
+            if (t.getStartTime() != null)
+                sb.append(" ").append(t.getStartTime());
             if (t.getDeadlineDate() != null) {
                 sb.append(" → дедлайн ").append(dateFormat.format(t.getDeadlineDate()));
-                if (t.getDeadlineTime() != null) sb.append(" ").append(t.getDeadlineTime());
+                if (t.getDeadlineTime() != null)
+                    sb.append(" ").append(t.getDeadlineTime());
             }
             sb.append(" - ").append(t.isDone() ? "✅" : "⭕");
         }
@@ -474,7 +537,8 @@ public class ResponseService {
         }
         boolean delete = flow == Flow.DELETE;
         s.setState(delete ? State.DELETE_TASK_WAIT_LIST_NUMBER : State.EDIT_TASK_WAIT_LIST_NUMBER);
-        return reply(new BotResponse(sb.toString()), buttons.cancel("Напишите номер задачи, которую хотите " + (delete ? "удалить." : "изменить.")));
+        return reply(new BotResponse(sb.toString()), buttons.cancel("Напишите номер задачи, которую хотите " +
+                (delete ? "удалить." : "изменить.")));
     }
 
     /**
@@ -519,7 +583,8 @@ public class ResponseService {
         Integer id = parseInt(text);
         Task task = id == null ? null : storage.getTaskById(id);
         if (task == null) {
-            return reply(buttons.dayChoice(id == null ? "❌ Введите ID задачи (число) или выберите день кнопкой." : "❌ Задача с ID " + id + " не найдена. Введите другой ID или выберите день:"));
+            return reply(buttons.dayChoice(id == null ? "❌ Введите ID задачи (число) или выберите день кнопкой." : "❌ Задача с ID " + id + " не найдена."
+                    + " Введите другой ID или выберите день:"));
         }
         return chooseTask(s, task);
     }
@@ -622,9 +687,12 @@ public class ResponseService {
      */
     private Flow flowOf(State state) {
         String name = state.name();
-        if (name.startsWith("SHOW")) return Flow.SHOW;
-        if (name.startsWith("DELETE")) return Flow.DELETE;
-        if (name.startsWith("MARK")) return Flow.MARK_DONE;
+        if (name.startsWith("SHOW"))
+            return Flow.SHOW;
+        if (name.startsWith("DELETE"))
+            return Flow.DELETE;
+        if (name.startsWith("MARK"))
+            return Flow.MARK_DONE;
         return name.startsWith("EDIT") ? Flow.EDIT : null;
     }
 
