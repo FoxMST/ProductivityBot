@@ -5,12 +5,33 @@ import java.time.LocalTime;
  * Сессия одного пользователя: состояние диалога и временные данные.
  */
 public class UserSession {
+    /**
+     * Текущее состояние диалога.
+     */
     private State state;
+    /**
+     * Выбранная дата (для удаления и редактирования).
+     */
     private LocalDate selectedDate;
+    /**
+     * ID задачи, с которой выполняется действие (0 = нет).
+     */
     private int pendingTaskId;
+    /**
+     * Черновик новой задачи: текст.
+     */
     private String pendingText;
+    /**
+     * Черновик новой задачи: время начала.
+     */
     private LocalTime pendingTime;
+    /**
+     * Черновик новой задачи: дата дедлайна.
+     */
     private LocalDate pendingDeadlineDate;
+    /**
+     * Черновик новой задачи: время дедлайна.
+     */
     private LocalTime pendingDeadlineTime;
 
     /**
@@ -22,7 +43,9 @@ public class UserSession {
     }
 
     /**
-     * @return состояние
+     * Возвращает текущее состояние диалога.
+     *
+     * @return состояние диалога, не null
      */
     public State getState() {
         return state;

@@ -49,20 +49,26 @@ public class Task {
     }
 
     /**
-     * @return идентификатор
+     * Возвращает идентификатор задачи.
+     *
+     * @return целое число больше 0, уникальное для каждой задачи
      */
     public int getId() {
         return id;
     }
 
     /**
-     * @return текст задачи
+     * Возвращает текст задачи.
+     *
+     * @return текст задачи в том виде, в котором его ввел пользователь
      */
     public String getText() {
         return text;
     }
 
     /**
+     * Устанавливает новый текст задачи.
+     *
      * @param text новый текст задачи
      */
     public void setText(String text) {
