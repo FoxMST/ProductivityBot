@@ -40,6 +40,18 @@ public class UserSession {
      * на единицу больше индекса в этом списке.
      */
     private List<Task> deadlineTasks = new ArrayList<>();
+    /**
+     * Список задач, выводимый сейчас с пагинацией.
+     */
+    private List<Task> pageTasks = new ArrayList<>();
+    /**
+     * Заголовок текущего постраничного списка.
+     */
+    private String pageTitle = "";
+    /**
+     * Индекс текущей страницы (с нуля).
+     */
+    private int page;
 
     /**
      * Создает сессию в состоянии IDLE.
@@ -165,5 +177,47 @@ public class UserSession {
      */
     public void setDeadlineTasks(List<Task> deadlineTasks) {
         this.deadlineTasks = new ArrayList<>(deadlineTasks);
+    }
+
+    /**
+     * @return список задач, выводимый сейчас с пагинацией
+     */
+    public List<Task> getPageTasks() {
+        return pageTasks;
+    }
+
+    /**
+     * @param pageTasks список задач, выводимый с пагинацией
+     */
+    public void setPageTasks(List<Task> pageTasks) {
+        this.pageTasks = new ArrayList<>(pageTasks);
+    }
+
+    /**
+     * @return заголовок текущего постраничного списка
+     */
+    public String getPageTitle() {
+        return pageTitle;
+    }
+
+    /**
+     * @param pageTitle заголовок текущего постраничного списка
+     */
+    public void setPageTitle(String pageTitle) {
+        this.pageTitle = pageTitle;
+    }
+
+    /**
+     * @return индекс текущей страницы (с нуля)
+     */
+    public int getPage() {
+        return page;
+    }
+
+    /**
+     * @param page индекс текущей страницы (с нуля)
+     */
+    public void setPage(int page) {
+        this.page = page;
     }
 }

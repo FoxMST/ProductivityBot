@@ -1,61 +1,25 @@
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Хранилище задач в оперативной памяти.
  */
 public class TaskStorage {
-    /**
-     * Все задачи по идентификатору: ключ — идентификатор задачи (id),
-     * значение — сама задача.
-     */
     private final Map<Integer, Task> tasksById;
-    /**
-     * Задачи по датам: ключ — дата задачи, значение — список задач этого дня
-     * в порядке добавления. Дни без задач в карте не хранятся.
-     */
     private final Map<LocalDate, List<Task>> tasksByDate;
-    /**
-     * Идентификатор, который получит следующая добавленная задача (начиная с 1).
-     */
     private int nextId;
 
-    /**
-     * Создает пустое хранилище.
-     */
     public TaskStorage() {
         tasksById = new HashMap<>();
         tasksByDate = new HashMap<>();
         nextId = 1;
     }
 
-    /**
-     * Добавляет новую задачу (без времени и дедлайна).
-     *
-     * @param text текст задачи
-     * @param date дата задачи
-     * @return идентификатор добавленной задачи
-     */
     public int addTask(String text, LocalDate date) {
-
         return addTask(text, date, null, null, null);
     }
 
-    /**
-     * Добавляет новую задачу со всеми параметрами.
-     *
-     * @param text         текст задачи
-     * @param date         дата задачи
-     * @param startTime    время начала (может быть null)
-     * @param deadlineDate дата дедлайна (может быть null)
-     * @param deadlineTime время дедлайна (может быть null)
-     * @return идентификатор добавленной задачи
-     */
     public int addTask(String text, LocalDate date, LocalTime startTime,
                        LocalDate deadlineDate, LocalTime deadlineTime) {
         int id = nextId++;
@@ -69,37 +33,16 @@ public class TaskStorage {
         return id;
     }
 
-    /**
-     * Возвращает список задач на указанную дату.
-     *
-     * @param date дата
-     * @return список задач (может быть пустым)
-     */
     public List<Task> getTasksByDate(LocalDate date) {
         List<Task> tasks = tasksByDate.get(date);
-        return tasks == null
-                ? new ArrayList<>()
-                : new ArrayList<>(tasks);
+        return tasks == null ? new ArrayList<>() : new ArrayList<>(tasks);
     }
 
-    /**
-     * Возвращает задачи с дедлайном, назначенные на дни указанного интервала,
-     * в порядке срочности: сначала самый ранний дедлайн. Задачи без времени
-     * дедлайна идут после задач с временем в тот же день.
-     *
-     * @param from первая дата интервала (включительно)
-     * @param to   последняя дата интервала (включительно)
-     * @return список задач (может быть пустым)
-     */
     public List<Task> getTasksWithDeadline(LocalDate from, LocalDate to) {
         List<Task> result = new ArrayList<>();
         for (Task task : tasksById.values()) {
-            if (task.getDeadlineDate() == null) {
-                continue;
-            }
-            if (task.getDate().isBefore(from) || task.getDate().isAfter(to)) {
-                continue;
-            }
+            if (task.getDeadlineDate() == null) continue;
+            if (task.getDate().isBefore(from) || task.getDate().isAfter(to)) continue;
             result.add(task);
         }
         result.sort(Comparator
@@ -110,23 +53,10 @@ public class TaskStorage {
         return result;
     }
 
-    /**
-     * Находит задачу по идентификатору.
-     *
-     * @param id идентификатор
-     * @return задача или null, если не найдена
-     */
     public Task getTaskById(int id) {
-
         return tasksById.get(id);
     }
 
-    /**
-     * Удаляет задачу по идентификатору.
-     *
-     * @param id идентификатор
-     * @throws IllegalArgumentException если задача с таким ID не найдена
-     */
     public void deleteTask(int id) {
         Task task = tasksById.remove(id);
         if (task == null) {
@@ -135,19 +65,10 @@ public class TaskStorage {
         List<Task> tasks = tasksByDate.get(task.getDate());
         if (tasks != null) {
             tasks.remove(task);
-            if (tasks.isEmpty()) {
-                tasksByDate.remove(task.getDate());
-            }
+            if (tasks.isEmpty()) tasksByDate.remove(task.getDate());
         }
     }
 
-    /**
-     * Обновляет текст задачи.
-     *
-     * @param id      идентификатор
-     * @param newText новый текст
-     * @throws IllegalArgumentException если задача с таким ID не найдена
-     */
     public void updateTaskText(int id, String newText) {
         Task task = tasksById.get(id);
         if (task == null) {
@@ -156,14 +77,6 @@ public class TaskStorage {
         task.setText(newText);
     }
 
-    /**
-     * Обновляет дату и время начала задачи.
-     *
-     * @param id   идентификатор
-     * @param date новая дата (может быть null)
-     * @param time новое время (может быть null)
-     * @throws IllegalArgumentException если задача с таким ID не найдена
-     */
     public void updateTaskDateTime(int id, LocalDate date, LocalTime time) {
         Task task = tasksById.get(id);
         if (task == null) {
@@ -173,43 +86,23 @@ public class TaskStorage {
             List<Task> oldList = tasksByDate.get(task.getDate());
             if (oldList != null) {
                 oldList.remove(task);
-                if (oldList.isEmpty()) {
-                    tasksByDate.remove(task.getDate());
-                }
+                if (oldList.isEmpty()) tasksByDate.remove(task.getDate());
             }
             task.setDate(date);
             tasksByDate.computeIfAbsent(date, k -> new ArrayList<>()).add(task);
         }
-        if (time != null) {
-            task.setStartTime(time);
-        }
+        if (time != null) task.setStartTime(time);
     }
 
-    /**
-     * Обновляет дедлайн задачи.
-     *
-     * @param id   идентификатор
-     * @param date новая дата дедлайна (может быть null)
-     * @param time новое время дедлайна (может быть null)
-     * @throws IllegalArgumentException если задача с таким ID не найдена
-     */
     public void updateTaskDeadline(int id, LocalDate date, LocalTime time) {
         Task task = tasksById.get(id);
         if (task == null) {
             throw new IllegalArgumentException("Задача с ID " + id + " не найдена");
         }
-        if (date != null)
-            task.setDeadlineDate(date);
-        if (time != null)
-            task.setDeadlineTime(time);
+        if (date != null) task.setDeadlineDate(date);
+        if (time != null) task.setDeadlineTime(time);
     }
 
-    /**
-     * Помечает задачу выполненной.
-     *
-     * @param id идентификатор
-     * @throws IllegalArgumentException если задача с таким ID не найдена
-     */
     public void markTaskDone(int id) {
         Task task = tasksById.get(id);
         if (task == null) {
@@ -217,4 +110,27 @@ public class TaskStorage {
         }
         task.setDone(true);
     }
+
+    // ===== TODO: DEBUG-ONLY — удалить после отладки пагинации =====
+
+    /**
+     * Заполняет хранилище тестовыми задачами для проверки пагинации.
+     * Создает {@code count} задач на указанную дату; у части задач есть
+     * дедлайн, у части — время начала, каждая пятая помечена выполненной.
+     *
+     * @param date  дата, на которую добавить задачи
+     * @param count количество задач (рекомендуется 25, чтобы было 3 страницы)
+     */
+    public void fillTestTasks(LocalDate date, int count) {
+        for (int i = 1; i <= count; i++) {
+            String text = "Тестовая задача #" + i;
+            LocalTime startTime = (i % 2 == 0) ? LocalTime.of(9 + (i % 10), 0) : null;
+            LocalDate deadlineDate = (i % 3 == 0) ? date.plusDays(i % 7) : null;
+            LocalTime deadlineTime = (deadlineDate != null) ? LocalTime.of(18, 0) : null;
+            int id = addTask(text, date, startTime, deadlineDate, deadlineTime);
+            if (i % 5 == 0) markTaskDone(id);
+        }
+    }
+
+    // ===== конец DEBUG-ONLY =====
 }

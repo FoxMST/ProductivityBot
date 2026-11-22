@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,8 +58,29 @@ public class Button {
      * @param text текст сообщения @return ответ с кнопкой пометки выполнения
      */
     public BotResponse markDone(String text) {
-        return new BotResponse(text, rows(
-                row(button(ButtonAction.MARK_DONE))));
+        return markDone(text, 0, 1);
+    }
+
+    /**
+     * Создает ответ с кнопкой пометки выполнения и, при необходимости,
+     * рядом кнопок пагинации.
+     *
+     * @param text       текст сообщения
+     * @param pageIndex  индекс текущей страницы (с нуля)
+     * @param totalPages всего страниц (не меньше 1)
+     * @return ответ с кнопками пагинации и пометки выполнения
+     */
+    public BotResponse markDone(String text, int pageIndex, int totalPages) {
+        List<List<ResponseButton>> keyboard = new ArrayList<>();
+        if (totalPages > 1) {
+            keyboard.add(row(
+                    button(ButtonAction.PREV_PAGE),
+                    new ResponseButton((pageIndex + 1) + "/" + totalPages,
+                            ButtonAction.PAGE_INFO.id()),
+                    button(ButtonAction.NEXT_PAGE)));
+        }
+        keyboard.add(row(button(ButtonAction.MARK_DONE)));
+        return new BotResponse(text, keyboard);
     }
 
     /**
