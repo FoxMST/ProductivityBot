@@ -1,5 +1,7 @@
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Сессия одного пользователя: состояние диалога и временные данные.
@@ -33,6 +35,11 @@ public class UserSession {
      * Черновик новой задачи: время дедлайна.
      */
     private LocalTime pendingDeadlineTime;
+    /**
+     * Последний показанный список задач с дедлайном: номер в списке
+     * на единицу больше индекса в этом списке.
+     */
+    private List<Task> deadlineTasks = new ArrayList<>();
 
     /**
      * Создает сессию в состоянии IDLE.
@@ -140,5 +147,23 @@ public class UserSession {
      */
     public void setPendingDeadlineTime(LocalTime pendingDeadlineTime) {
         this.pendingDeadlineTime = pendingDeadlineTime;
+    }
+
+    /**
+     * Возвращает последний показанный список задач с дедлайном.
+     *
+     * @return задачи в порядке показа (может быть пустым, не null)
+     */
+    public List<Task> getDeadlineTasks() {
+        return deadlineTasks;
+    }
+
+    /**
+     * Запоминает показанный список задач с дедлайном.
+     *
+     * @param deadlineTasks задачи в порядке показа
+     */
+    public void setDeadlineTasks(List<Task> deadlineTasks) {
+        this.deadlineTasks = new ArrayList<>(deadlineTasks);
     }
 }

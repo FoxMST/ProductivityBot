@@ -1,6 +1,7 @@
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,34 @@ public class TaskStorage {
         return tasks == null
                 ? new ArrayList<>()
                 : new ArrayList<>(tasks);
+    }
+
+    /**
+     * Возвращает задачи с дедлайном, назначенные на дни указанного интервала,
+     * в порядке срочности: сначала самый ранний дедлайн. Задачи без времени
+     * дедлайна идут после задач с временем в тот же день.
+     *
+     * @param from первая дата интервала (включительно)
+     * @param to   последняя дата интервала (включительно)
+     * @return список задач (может быть пустым)
+     */
+    public List<Task> getTasksWithDeadline(LocalDate from, LocalDate to) {
+        List<Task> result = new ArrayList<>();
+        for (Task task : tasksById.values()) {
+            if (task.getDeadlineDate() == null) {
+                continue;
+            }
+            if (task.getDate().isBefore(from) || task.getDate().isAfter(to)) {
+                continue;
+            }
+            result.add(task);
+        }
+        result.sort(Comparator
+                .comparing(Task::getDeadlineDate)
+                .thenComparing(Task::getDeadlineTime,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparingInt(Task::getId));
+        return result;
     }
 
     /**

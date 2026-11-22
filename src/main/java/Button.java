@@ -62,6 +62,39 @@ public class Button {
     }
 
     /**
+     * Создает ответ с выбором дня для /show_tasklist: Сегодня, Завтра,
+     * Ввести дату, Только с дедлайном и Отмена.
+     *
+     * @param text текст сообщения
+     * @return ответ с кнопками выбора дня
+     */
+    public BotResponse showDayChoice(String text) {
+        return new BotResponse(text, rows(
+                row(
+                        button(ButtonAction.TODAY),
+                        button(ButtonAction.TOMORROW),
+                        button(ButtonAction.CUSTOM_DATE)),
+                row(
+                        button(ButtonAction.ONLY_DEADLINE),
+                        button(ButtonAction.CANCEL))));
+    }
+
+    /**
+     * Создает ответ с готовыми интервалами дат: неделя, 2 недели, месяц и Отмена.
+     *
+     * @param text текст сообщения
+     * @return ответ с кнопками выбора интервала
+     */
+    public BotResponse intervalChoice(String text) {
+        return new BotResponse(text, rows(
+                row(
+                        button(ButtonAction.WEEK),
+                        button(ButtonAction.TWO_WEEKS),
+                        button(ButtonAction.MONTH)),
+                row(button(ButtonAction.CANCEL))));
+    }
+
+    /**
      * @param id идентификатор из нажатой кнопки @return действие или null
      */
     public ButtonAction fromId(String id) {

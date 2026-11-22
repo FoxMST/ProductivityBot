@@ -59,6 +59,28 @@ public class ResponseService {
     private static final String NOT_FOUND_MESSAGE = "❌ Задача не найдена.";
 
     /**
+     * Запрос интервала дат для списка задач с дедлайном.
+     */
+    private static final String ASK_INTERVAL_MESSAGE =
+            "Введите интервал в формате ДД.ММ.ГГГГ-ДД.ММ.ГГГГ, чтобы показать "
+                    + "задачи с дедлайном за этот период, или выберите диапазон кнопкой:";
+
+    /**
+     * Сообщение об ошибке формата интервала дат.
+     */
+    private static final String BAD_INTERVAL_MESSAGE =
+            "❌ Неправильный формат. Введите ДД.ММ.ГГГГ-ДД.ММ.ГГГГ "
+                    + "(начало не позже конца) или выберите диапазон кнопкой:";
+
+    /**
+     * Запрос номеров задач из списка задач с дедлайном.
+     */
+    private static final String ASK_DEADLINE_DONE_MESSAGE =
+            "Выберите номер/номера задач в списке, которые необходимо "
+                    + "пометить выполненными. Если задач несколько введите "
+                    + "номера через пробел.";
+
+    /**
      * Контекст выполняемой команды.
      */
     private enum Flow {
@@ -170,6 +192,10 @@ public class ResponseService {
                 return handleEditDeadline(s, text);
             case MARK_DONE_WAIT_NUMBERS:
                 return handleMarkDoneNumbers(s, text);
+            case SHOW_DEADLINE_WAIT_INTERVAL:
+                return handleDeadlineInterval(s, text);
+            case DEADLINE_MARK_WAIT_NUMBERS:
+                return handleDeadlineMarkDone(s, text);
             case IDLE:
                 return reply(new BotResponse("Вы ввели: «" + text + "»"));
             case SHOW_TASKLIST_WAIT_CUSTOM_DATE:
@@ -254,6 +280,35 @@ public class ResponseService {
         if (state == State.DELETE_TASK_CONFIRM && action == ButtonAction.DELETE_CONFIRM)
             return deleteTask(s, s.getPendingTaskId());
 
+        if (state == State.SHOW_TASKLIST_WAIT_DATE
+                && action == ButtonAction.ONLY_DEADLINE) {
+            return ask(
+                    s,
+                    State.SHOW_DEADLINE_WAIT_INTERVAL,
+                    buttons.intervalChoice(ASK_INTERVAL_MESSAGE));
+        }
+
+        if (state == State.SHOW_DEADLINE_WAIT_INTERVAL) {
+            LocalDate today = LocalDate.now(clock);
+            if (action == ButtonAction.WEEK) {
+                return showDeadlineTasks(s, today, today.plusDays(6));
+            }
+            if (action == ButtonAction.TWO_WEEKS) {
+                return showDeadlineTasks(s, today, today.plusDays(13));
+            }
+            if (action == ButtonAction.MONTH) {
+                return showDeadlineTasks(s, today, today.plusMonths(1));
+            }
+        }
+
+        if (state == State.DEADLINE_MARK_WAIT_BUTTON
+                && action == ButtonAction.MARK_DONE) {
+            return ask(
+                    s,
+                    State.DEADLINE_MARK_WAIT_NUMBERS,
+                    buttons.cancel(ASK_DEADLINE_DONE_MESSAGE));
+        }
+
         if (isDayChoiceState(state) && action != null) {
             Flow flow = flowOf(state);
             switch (action) {
@@ -296,7 +351,7 @@ public class ResponseService {
                 return ask(
                         s,
                         State.SHOW_TASKLIST_WAIT_DATE,
-                        buttons.dayChoice("За какой день показать задачи?"));
+                        buttons.showDayChoice("За какой день показать задачи?"));
             case "/delete_task":
                 return ask(
                         s,
@@ -490,6 +545,102 @@ public class ResponseService {
         }
         if (count == 0) return reply(buttons.cancel("❌ Неверные номера. Попробуйте еще раз:"));
         return finish(s, "✅ Задачи помечены как выполненные (" + count + " шт.)");
+    }
+
+    /**
+     * Обрабатывает ввод интервала дат для списка задач с дедлайном.
+     *
+     * @param s    сессия
+     * @param text интервал в формате ДД.ММ.ГГГГ-ДД.ММ.ГГГГ
+     * @return ответы бота
+     */
+    private List<BotResponse> handleDeadlineInterval(UserSession s, String text) {
+        String[] parts = text.trim().split("-");
+        if (parts.length != 2) {
+            return reply(buttons.intervalChoice(BAD_INTERVAL_MESSAGE));
+        }
+        try {
+            LocalDate from = LocalDate.parse(parts[0].trim(), dateFormat);
+            LocalDate to = LocalDate.parse(parts[1].trim(), dateFormat);
+            if (to.isBefore(from)) {
+                return reply(buttons.intervalChoice(BAD_INTERVAL_MESSAGE));
+            }
+            return showDeadlineTasks(s, from, to);
+        } catch (DateTimeParseException e) {
+            return reply(buttons.intervalChoice(BAD_INTERVAL_MESSAGE));
+        }
+    }
+
+    /**
+     * Выводит задачи с дедлайном на интервале дат в порядке срочности.
+     *
+     * @param s    сессия
+     * @param from первая дата интервала
+     * @param to   последняя дата интервала
+     * @return ответы бота
+     */
+    private List<BotResponse> showDeadlineTasks(UserSession s,
+                                                LocalDate from, LocalDate to) {
+        List<Task> tasks = storage.getTasksWithDeadline(from, to);
+        String interval = dateFormat.format(from) + "-" + dateFormat.format(to);
+        if (tasks.isEmpty()) {
+            return finish(s, "📋 На интервале " + interval + " задач с дедлайном нет.");
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("📋 Задачи с дедлайном на интервале ").append(interval)
+                .append(" в порядке срочности.\n")
+                .append("Формат: (Номер) - (Задача) - (ID) - (Дата, время) - ")
+                .append("(Дедлайн) - (Статус):");
+        for (int i = 0; i < tasks.size(); i++) {
+            Task t = tasks.get(i);
+            sb.append("\n").append(i + 1).append(". ").append(t.getText())
+                    .append(" - ").append(t.getId())
+                    .append(" - ").append(dateFormat.format(t.getDate()));
+            if (t.getStartTime() != null) {
+                sb.append(" ").append(t.getStartTime());
+            }
+            sb.append(" → дедлайн ").append(dateFormat.format(t.getDeadlineDate()));
+            if (t.getDeadlineTime() != null) {
+                sb.append(" ").append(t.getDeadlineTime());
+            }
+            if (t.isDone()) {
+                sb.append(" - ✅");
+            } else {
+                sb.append(" - ⭕");
+            }
+        }
+        s.setDeadlineTasks(tasks);
+        return ask(s, State.DEADLINE_MARK_WAIT_BUTTON, buttons.markDone(sb.toString()));
+    }
+
+    /**
+     * Помечает выполненными задачи из списка задач с дедлайном по их номерам.
+     *
+     * @param s    сессия
+     * @param text номера задач через пробел
+     * @return ответы бота
+     */
+    private List<BotResponse> handleDeadlineMarkDone(UserSession s, String text) {
+        List<Task> shown = s.getDeadlineTasks();
+        Set<Integer> numbers = new TreeSet<>();
+        for (String part : text.trim().split("\\s+")) {
+            Integer number = parseInt(part);
+            if (number != null && number >= 1 && number <= shown.size()) {
+                numbers.add(number);
+            }
+        }
+        if (numbers.isEmpty()) {
+            return reply(buttons.cancel("❌ Неверные номера. Попробуйте еще раз:"));
+        }
+        try {
+            for (int number : numbers) {
+                storage.markTaskDone(shown.get(number - 1).getId());
+            }
+        } catch (IllegalArgumentException e) {
+            return finish(s, NOT_FOUND_MESSAGE);
+        }
+        return finish(s, "✅ Задачи помечены как выполненные ("
+                + numbers.size() + " шт.)");
     }
 
     /**
