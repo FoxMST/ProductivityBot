@@ -40,6 +40,13 @@ class ResponseServiceTest {
             "📋 Задачи на 10.12.2026. Формат: (Номер) - (Задача) - (ID) - (Время) - (Дедлайн) - (Статус):";
 
     /**
+     * Заголовок списка, который выводят /show_tasklist и /mark_as_done
+     */
+    private final String showHeaderToday =
+            "📋 Задачи на 10.12.2026. Формат: (Номер) - (Задача) - (ID) - "
+                    + "(Дата, время) - (Дедлайн) - (Статус):";
+
+    /**
      * Тестируемый объект (время зафиксировано: 10.12.2026).
      */
     private ResponseService bot;
@@ -117,7 +124,7 @@ class ResponseServiceTest {
         addDefaultTask();
 
         Assertions.assertEquals("За какой день показать задачи?", say("/show_tasklist"));
-        Assertions.assertEquals(listHeaderToday + "\n1. Купить хлеб - 1 - 10.12.2026 - ⭕",
+        Assertions.assertEquals(showHeaderToday + "\n1. Купить хлеб - 1 - 10.12.2026 - ⭕",
                 press(ButtonAction.TODAY));
     }
 
@@ -186,7 +193,7 @@ class ResponseServiceTest {
         Assertions.assertEquals("🗑 Задача удалена.", press(ButtonAction.DELETE_CONFIRM));
 
         say("/show_tasklist");
-        Assertions.assertEquals(listHeaderToday + "\n1. Позвонить маме - 2 - 10.12.2026 - ⭕",
+        Assertions.assertEquals(showHeaderToday + "\n1. Позвонить маме - 2 - 10.12.2026 - ⭕",
                 press(ButtonAction.TODAY));
     }
 
@@ -214,7 +221,7 @@ class ResponseServiceTest {
         Assertions.assertEquals(cancelled, press(ButtonAction.CANCEL));
 
         say("/show_tasklist");
-        Assertions.assertEquals(listHeaderToday + "\n1. Купить хлеб - 1 - 10.12.2026 - ⭕",
+        Assertions.assertEquals(showHeaderToday + "\n1. Купить хлеб - 1 - 10.12.2026 - ⭕",
                 press(ButtonAction.TODAY));
     }
 
@@ -265,7 +272,7 @@ class ResponseServiceTest {
         Assertions.assertEquals("✅ Задача обновлена.", say("Купить масло"));
 
         say("/show_tasklist");
-        Assertions.assertEquals(listHeaderToday + "\n1. Купить масло - 1 - 10.12.2026 - ⭕",
+        Assertions.assertEquals(showHeaderToday + "\n1. Купить масло - 1 - 10.12.2026 - ⭕",
                 press(ButtonAction.TODAY));
     }
 
@@ -321,7 +328,7 @@ class ResponseServiceTest {
 
         say("/show_tasklist");
 
-        String expectedList = listHeaderToday + "\n1. Сделать дз - 1 - 10.12.2026 18:30 → дедлайн 12.12.2026 20:00 - ⭕";
+        String expectedList = showHeaderToday + "\n1. Сделать дз - 1 - 10.12.2026 18:30 → дедлайн 12.12.2026 20:00 - ⭕";
         Assertions.assertEquals(expectedList, press(ButtonAction.TODAY));
     }
 
@@ -341,7 +348,7 @@ class ResponseServiceTest {
         Assertions.assertEquals("✅ Задачи помечены как выполненные (1 шт.)", say("1"));
 
         say("/show_tasklist");
-        Assertions.assertEquals(listHeaderToday + "\n1. Купить хлеб - 1 - 10.12.2026 - ✅",
+        Assertions.assertEquals(showHeaderToday + "\n1. Купить хлеб - 1 - 10.12.2026 - ✅",
                 press(ButtonAction.TODAY));
     }
 
